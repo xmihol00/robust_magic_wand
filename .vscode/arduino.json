@@ -1,0 +1,6 @@
+{
+    "port": "/dev/ttyACM0",
+    "sketch": "embedded_ML.ino",
+    "output": "build/",
+    "board": "arduino:mbed_nano:nano33ble"
+}
