@@ -4,8 +4,8 @@ import matplotlib.pyplot as plt
 
 PORT = '/dev/ttyACM0'
 BAUD_RATE = 9600
-IMAGE_HEIGHT = 80
-IMAGE_WIDTH = 80
+IMAGE_HEIGHT = 40
+IMAGE_WIDTH = 40
 
 arduino = serial.Serial(PORT, BAUD_RATE)
 line_count = 0

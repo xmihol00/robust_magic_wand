@@ -3,7 +3,7 @@ import numpy as np
 import sys
 
 SAMPLES_PER_MEASUREMENT = 119
-IMAGE_WIDTH_HEIGHT = 80
+IMAGE_WIDTH_HEIGHT = 40
 IMAGE_WIDTH_HEIGHT_INDEX = IMAGE_WIDTH_HEIGHT - 1
 
 if len(sys.argv) < 2:
@@ -19,10 +19,10 @@ file.readline() # skip header
 data = file.read()
 file.close()
 
-valid_lines = [list(map(lambda x: float(x), line.split(','))) for line in data.split('\n') if line] # remove empty lines and convert CSV to float lists
+rows_of_samples = [list(map(lambda x: float(x), line.split(','))) for line in data.split('\n') if line] # remove empty lines and convert CSV to float lists
 
-for i, idx in enumerate(range(0, len(valid_lines), SAMPLES_PER_MEASUREMENT)): 
-    measurment = np.array(valid_lines[idx: idx+SAMPLES_PER_MEASUREMENT])
+for i, idx in enumerate(range(0, len(rows_of_samples), SAMPLES_PER_MEASUREMENT)): 
+    measurment = np.array(rows_of_samples[idx: idx+SAMPLES_PER_MEASUREMENT])
     acceleration_average = np.average(measurment[:, 0:3], axis=0)
 
     # calcualte orientation

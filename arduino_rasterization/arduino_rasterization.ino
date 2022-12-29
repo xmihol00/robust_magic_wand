@@ -4,9 +4,9 @@
 
 const float ACCELERATION_TRESHOLD = 1.5; // threshold of significant in G's
 
-const unsigned IMAGE_HEIGHT = 80;
-const unsigned IMAGE_WIDTH = 80;
-const unsigned IMAGE_INDEX = 79;
+const unsigned IMAGE_HEIGHT = 40;
+const unsigned IMAGE_WIDTH = 40;
+const unsigned IMAGE_INDEX = 39;
 
 const unsigned SAMPLES_PER_SPELL = 119;
 const unsigned SAMPLES_DOUBLED = 119 << 1;
