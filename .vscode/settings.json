@@ -1,0 +1,5 @@
+{
+    "arduino.commandPath": "launch_arduino.sh",
+    "arduino.path": "/home/david/projs/embedded_ML/",
+    "arduino.useArduinoCli": false
+}
