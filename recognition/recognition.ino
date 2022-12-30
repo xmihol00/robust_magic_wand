@@ -1,37 +1,247 @@
-/*
-  Blink
 
-  Turns an LED on for one second, then off for one second, repeatedly.
+#include <Arduino_LSM9DS1.h>
+#include <limits>
+#include <cstring>
 
-  Most Arduinos have an on-board LED you can control. On the UNO, MEGA and ZERO
-  it is attached to digital pin 13, on MKR1000 on pin 6. LED_BUILTIN is set to
-  the correct LED pin independent of which board is used.
-  If you want to know what pin the on-board LED is connected to on your Arduino
-  model, check the Technical Specs of your board at:
-  https://www.arduino.cc/en/Main/Products
+#include <TensorFlowLite.h>
+#include <tensorflow/lite/micro/all_ops_resolver.h>
+// #include <tensorflow/lite/micro/tflite_bridge/micro_error_reporter.h>
+#include <tensorflow/lite/micro/micro_interpreter.h>
+#include <tensorflow/lite/schema/schema_generated.h>
 
-  modified 8 May 2014
-  by Scott Fitzgerald
-  modified 2 Sep 2016
-  by Arturo Guadalupi
-  modified 8 Sep 2016
-  by Colby Newman
+#include "model.h"
 
-  This example code is in the public domain.
+using namespace std;
+using namespace tflite;
 
-  https://www.arduino.cc/en/Tutorial/BuiltInExamples/Blink
-*/
+const float ACCELERATION_TRESHOLD = 1.5;
 
-// the setup function runs once when you press reset or power the board
-void setup() {
-  // initialize digital pin LED_BUILTIN as an output.
-  pinMode(LED_BUILTIN, OUTPUT);
+const unsigned IMAGE_HEIGHT = 40;
+const unsigned IMAGE_WIDTH = 40;
+const unsigned IMAGE_INDEX = 39;
+const unsigned NUMNBER_OF_IMAGE_PIXELS = IMAGE_HEIGHT * IMAGE_WIDTH;
+
+const unsigned SAMPLES_PER_SPELL = 119;
+const unsigned SAMPLES_DOUBLED = 119 << 1;
+const unsigned SAMPLES_TRIPPELED = SAMPLES_PER_SPELL + SAMPLES_DOUBLED;
+const float DELTA_T = 1.0f / SAMPLES_PER_SPELL;
+
+const unsigned NUMBER_OF_LABELS = 5;
+const char* LABELS[NUMBER_OF_LABELS] = { "Avada Kedavra", "Locomotor", "Arresto Momentum", "Revelio", "Alohomora" };
+
+float acceleration_average_x, acceleration_average_y;
+float orientation_average_x, orientation_average_y;
+float min_x, min_y, max_x, max_y;
+
+float acceleration_data[SAMPLES_TRIPPELED] = {};
+float gyroscope_data[SAMPLES_TRIPPELED] = {};
+float magnetometr_data[SAMPLES_TRIPPELED] = {};
+float orientation_data[SAMPLES_DOUBLED] = {};
+float stroke_points[SAMPLES_DOUBLED] = {};
+
+AllOpsResolver ops_resolver;
+const Model *tf_model = nullptr;
+MicroInterpreter *interpreter = nullptr;
+TfLiteTensor *input_tensor = nullptr;
+TfLiteTensor *output_tensor = nullptr;
+
+const unsigned TENSOR_ARENA_SIZE = 128 * 1024;
+byte tensor_arena[TENSOR_ARENA_SIZE] __attribute__((aligned(16)));
+
+void average_acceleration()
+{
+	acceleration_average_x = 0.0f;
+	acceleration_average_y = 0.0f;
+
+	for (unsigned i = 0; i < SAMPLES_TRIPPELED; i += 3)
+	{
+		acceleration_average_x += acceleration_data[i + 1];
+		acceleration_average_y += acceleration_data[i + 2];
+	}
+
+	acceleration_average_x *= DELTA_T;
+	acceleration_average_y *= DELTA_T;
 }
 
-// the loop function runs over and over again forever
-void loop() {
-  digitalWrite(LED_BUILTIN, HIGH);  // turn the LED on (HIGH is the voltage level)
-  delay(2500);                      // wait for a second
-  digitalWrite(LED_BUILTIN, LOW);   // turn the LED off by making the voltage LOW
-  delay(500);                      // wait for a second
+void calculate_orientation()
+{
+	orientation_average_x = 0.0f;
+	orientation_average_y = 0.0f;
+
+	float previous_orientation_x = 0.0f;
+	float previous_orientation_y = 0.0f;
+
+	for (unsigned i = 0, j = 0; j < SAMPLES_DOUBLED; i += 3, j += 2)
+	{
+		orientation_data[j] = previous_orientation_x + gyroscope_data[i + 1] * DELTA_T;
+		orientation_data[j + 1] = previous_orientation_y + gyroscope_data[i + 2] * DELTA_T;
+
+		previous_orientation_x = orientation_data[j];
+		previous_orientation_y = orientation_data[j + 1];
+
+		orientation_average_x += previous_orientation_x;
+		orientation_average_y += previous_orientation_y;
+	}
+
+	orientation_average_x *= DELTA_T;
+	orientation_average_y *= DELTA_T;
+}
+
+void calculate_stroke()
+{
+	min_x = min_y = numeric_limits<float>::max();
+	max_x = max_y = numeric_limits<float>::min();
+
+	float acceleration_magnitude = sqrtf((acceleration_average_x * acceleration_average_x) + (acceleration_average_y * acceleration_average_y));
+	if (acceleration_magnitude < 0.0001f)
+	{
+		acceleration_magnitude = 0.0001f;
+	}
+	const float normalized_acceleration_x = acceleration_average_x / acceleration_magnitude;
+	const float normalized_acceleration_y = acceleration_average_y / acceleration_magnitude;
+
+	for (unsigned i = 0; i < SAMPLES_DOUBLED; i += 2)
+	{
+		float normalized_orientation_x = (orientation_data[i] - orientation_average_x);
+		float normalized_orientation_y = (orientation_data[i + 1] - orientation_average_y);
+
+		float x = -normalized_acceleration_x * normalized_orientation_x - normalized_acceleration_y * normalized_orientation_y;
+		float y = normalized_acceleration_x * normalized_orientation_y - normalized_acceleration_y * normalized_orientation_x;
+
+		stroke_points[i] = x;
+		stroke_points[i + 1] = y;
+
+		if (x > max_x)
+		{
+			max_x = x;
+		}
+		else if (x < min_x)
+		{
+			min_x = x;
+		}
+
+		if (y > max_y)
+		{
+			max_y = y;
+		}
+		else if (y < min_y)
+		{
+			min_y = y;
+		}
+	}
+}
+
+void rasterize_stroke()
+{
+	float shift_x = 1.0f / (max_x - min_x) * IMAGE_INDEX;
+	float shift_y = 1.0f / (max_y - min_y) * IMAGE_INDEX;
+	float color = (255.0f - SAMPLES_PER_SPELL + 1.0f) / 255.0f;
+	float color_increase = 1.0f / 255.0f;
+
+	for (unsigned i = 0; i < SAMPLES_DOUBLED; i += 2)
+	{
+		unsigned x = static_cast<unsigned>(roundf((stroke_points[i] - min_x) * shift_x));
+		unsigned y = static_cast<unsigned>(roundf((stroke_points[i + 1] - min_y) * shift_y));
+
+		input_tensor->data.f[y * IMAGE_WIDTH + x] = color;
+		color += color_increase;
+	}
+}
+
+void setup()
+{
+	Serial.begin(9600);
+	while (!Serial)
+		;
+
+	if (!IMU.begin())
+	{
+		Serial.println("Failed to initialize IMU.");
+		while (true)
+			;
+	}
+
+	// get the TFL representation of the model byte array
+	tf_model = GetModel(model);
+	if (tf_model->version() != TFLITE_SCHEMA_VERSION)
+	{
+		Serial.println("Model schema mismatch.");
+		while (true)
+			;
+	}
+
+	interpreter = new MicroInterpreter(tf_model, ops_resolver, tensor_arena, TENSOR_ARENA_SIZE);
+	interpreter->AllocateTensors();
+	input_tensor = interpreter->input(0);
+	output_tensor = interpreter->output(0);
+}
+
+void loop()
+{
+	Serial.println();
+	Serial.println();
+	Serial.println("Get ready.");
+	delay(1500);
+	Serial.println("Perform spell.");
+	while (true)
+	{
+		if (IMU.accelerationAvailable())
+		{
+			float x, y, z;
+			IMU.readAcceleration(x, y, z);
+			if (fabs(y) + fabs(z) >= ACCELERATION_TRESHOLD)
+			{
+				break;
+			}
+		}
+	}
+	Serial.println("Capuring spell...");
+
+	for (unsigned i = 0; i < SAMPLES_TRIPPELED;)
+	{
+		if (IMU.accelerationAvailable() && IMU.gyroscopeAvailable())
+		{
+			IMU.readAcceleration(acceleration_data[i], acceleration_data[i + 1], acceleration_data[i + 2]);
+			IMU.readGyroscope(gyroscope_data[i], gyroscope_data[i + 1], gyroscope_data[i + 2]);
+			IMU.readMagneticField(magnetometr_data[i], magnetometr_data[i + 1], magnetometr_data[i + 2]);
+
+			i += 3;
+		}
+	}
+	Serial.println("Spell captured.");
+
+	average_acceleration();
+	calculate_orientation();
+	calculate_stroke();
+	rasterize_stroke();
+
+	Serial.println("Recognizing...");
+	TfLiteStatus invokeStatus = interpreter->Invoke();
+	if (invokeStatus != kTfLiteOk)
+	{
+		Serial.println("Invoke failed.");
+		while (true)
+			;
+	}
+
+	float best_score = numeric_limits<float>::min();
+	unsigned best_label;
+	for (unsigned i = 0; i < NUMBER_OF_LABELS; i++)
+	{
+		float score = output_tensor->data.f[i];
+		Serial.print(LABELS[i]);
+		Serial.print(": ");
+		Serial.print(score * 100.0f, 2);
+		Serial.println(" %");
+		if (score > best_score)
+		{
+			best_score = score;
+			best_label = i;
+		}
+	}
+	Serial.println();
+	Serial.print("You performed: ");
+	Serial.println(LABELS[best_label]);
+
+	memset(input_tensor->data.f, 0, NUMNBER_OF_IMAGE_PIXELS * sizeof(float));
 }

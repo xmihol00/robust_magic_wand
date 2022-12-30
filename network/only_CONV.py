@@ -61,22 +61,30 @@ for i, idx in enumerate(range(0, len(rows_of_samples), SAMPLES_PER_MEASUREMENT))
 X_train, X_test, y_train, y_test = skm.train_test_split(images, labels, test_size=0.2, random_state=42)
 y_train = tfu.to_categorical(y_train, num_classes=5) # one-hot encoding of train labels
 
-#for image, label in zip(X_train, y_train):
-#    plt.imshow(image[0], cmap="gray")
-#    plt.title(f"{label}")
-#    plt.show()
+for image, label in zip(X_train, y_train):
+    plt.imshow(image.reshape(IMAGE_WIDTH, IMAGE_HEIGHT), cmap="gray")
+    plt.title(f"{label}")
+    plt.show()
 
+leaky_ReLU = tf.keras.layers.LeakyReLU(0.1)
 model = tfm.Sequential([
-    tfl.Conv2D(filters=8, kernel_size=(5, 5), activation="relu", padding="valid"),
+    tfl.Conv2D(filters=8, kernel_size=(5, 5), activation=leaky_ReLU, padding="valid"),
     tfl.MaxPool2D(),
-    tfl.Conv2D(filters=16, kernel_size=(3, 3), activation="relu", padding="valid"),
+    tfl.Conv2D(filters=16, kernel_size=(3, 3), activation=leaky_ReLU, padding="valid"),
     tfl.MaxPool2D(),
-    tfl.Conv2D(filters=32, kernel_size=(3, 3), activation="relu", padding="valid"),
+    tfl.Conv2D(filters=32, kernel_size=(3, 3), activation=leaky_ReLU, padding="valid"),
     tfl.MaxPool2D(),
-    tfl.Conv2D(filters=64, kernel_size=(3, 3), activation="relu", padding="valid"),
+    tfl.Conv2D(filters=64, kernel_size=(3, 3), activation=leaky_ReLU, padding="valid"),
     tfl.Conv2D(filters=5, kernel_size=(1, 1), activation="softmax", padding="same"),
     tfl.Reshape([5])                                                                               
 ])
 
 model.compile(optimizer="adam", loss="categorical_crossentropy", metrics=["accuracy"])
 model.fit(X_train, y_train, epochs=10, validation_split=0.2, batch_size=8)
+converter = tf.lite.TFLiteConverter.from_keras_model(model)
+tflite_model = converter.convert()
+
+file = open("models/only_CONV.tflite", "wb")
+file.write(tflite_model)
+file.close()
+os.system('echo "const unsigned char model[] = {" > models/only_CONV.h && cat models/only_CONV.tflite | xxd -i >> models/only_CONV.h && echo "};" >> models/only_CONV.h')

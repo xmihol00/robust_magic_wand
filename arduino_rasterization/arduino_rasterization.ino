@@ -2,7 +2,7 @@
 #include <Arduino_LSM9DS1.h>
 #include <limits>
 
-const float ACCELERATION_TRESHOLD = 1.5; // threshold of significant in G's
+const float ACCELERATION_TRESHOLD = 1.5;
 
 const unsigned IMAGE_HEIGHT = 40;
 const unsigned IMAGE_WIDTH = 40;
@@ -131,8 +131,8 @@ void setup()
 
     if (!IMU.begin())
     {
-        Serial.println("Failed to initialize IMU!");
-        while (1)
+        Serial.println("Failed to initialize IMU.");
+        while (true)
             ;
     }
 }
