@@ -5,7 +5,7 @@ import sys
 import tty
 import termios
 
-PORT = '/dev/ttyACM0'
+PORT = "/dev/ttyACM0"
 BAUD_RATE = 9600
 SAMPLES_PER_MEASUREMENT = 119
 IMAGE_WIDTH_HEIGHT = 80

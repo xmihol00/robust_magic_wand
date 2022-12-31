@@ -16,7 +16,7 @@ import keras_flops as kf
 import time
 import functools
 
-from data_loader import load_data_sets
+import data_loaders
 
 SEED = 42
 IMAGE_HEIGHT = 40
@@ -43,10 +43,28 @@ def collect_model_summary(summary_line, model_dict):
 hidden_activation = tf.keras.layers.LeakyReLU(0.1)
 droput_1 = 0.4
 droput_2 = 0.3
+droput_3 = 0.25
 
 models = [
     tfm.Sequential([
-        tfl.Flatten(),
+        tfl.Dense(units=5, activation="softmax")
+    ]),
+
+    tfm.Sequential([
+        tfl.Dense(units=100, activation=hidden_activation),
+        tfl.Dense(units=5, activation="softmax")
+    ]),
+
+    tfm.Sequential([
+        tfl.Dense(units=125, activation=hidden_activation),
+        tfl.Dense(units=75, activation=hidden_activation),
+        tfl.Dense(units=5, activation="softmax")
+    ]),
+
+    tfm.Sequential([
+        tfl.Dense(units=150, activation=hidden_activation),
+        tfl.Dense(units=100, activation=hidden_activation),
+        tfl.Dense(units=50, activation=hidden_activation),
         tfl.Dense(units=5, activation="softmax")
     ]),
 
@@ -75,18 +93,6 @@ models = [
     ]),
 
     tfm.Sequential([
-        tfl.Conv2D(filters=32, kernel_size=(3, 3), activation=hidden_activation, padding="same"),
-        tfl.MaxPool2D(),
-        tfl.Conv2D(filters=64, kernel_size=(3, 3), activation=hidden_activation, padding="same"),
-        tfl.MaxPool2D(),
-        tfl.Conv2D(filters=128, kernel_size=(3, 3), activation=hidden_activation, padding="same"),
-        tfl.MaxPool2D(),
-        tfl.Flatten(),
-        tfl.Dense(units=256, activation=hidden_activation),
-        tfl.Dense(units=5, activation="softmax"),
-    ]),
-
-    tfm.Sequential([
         tfl.Conv2D(filters=8, kernel_size=(5, 5), activation=hidden_activation, padding="valid"),
         tfl.MaxPool2D(),
         tfl.Conv2D(filters=16, kernel_size=(3, 3), activation=hidden_activation, padding="valid"),
@@ -105,17 +111,6 @@ models = [
         tfl.Conv2D(filters=64, kernel_size=(3, 3), activation=hidden_activation, padding="valid"),
         tfl.Flatten(),
         tfl.Dense(units=128, activation=hidden_activation),
-        tfl.Dense(units=5, activation="softmax"),
-    ]),
-
-    tfm.Sequential([
-        tfl.Conv2D(filters=32, kernel_size=(5, 5), activation=hidden_activation, padding="valid"),
-        tfl.MaxPool2D(),
-        tfl.Conv2D(filters=64, kernel_size=(3, 3), activation=hidden_activation, padding="valid"),
-        tfl.MaxPool2D(),
-        tfl.Conv2D(filters=128, kernel_size=(3, 3), activation=hidden_activation, padding="valid"),
-        tfl.Flatten(),
-        tfl.Dense(units=256, activation=hidden_activation),
         tfl.Dense(units=5, activation="softmax"),
     ]),
 
@@ -146,19 +141,28 @@ models = [
     ]),
 
     tfm.Sequential([
-        tfl.Conv2D(filters=32, kernel_size=(5, 5), activation=hidden_activation, padding="valid"),
-        tfl.MaxPool2D(),
-        tfl.Conv2D(filters=64, kernel_size=(3, 3), activation=hidden_activation, padding="valid"),
-        tfl.MaxPool2D(),
-        tfl.Conv2D(filters=128, kernel_size=(3, 3), activation=hidden_activation, padding="valid"),
-        tfl.MaxPool2D(),
-        tfl.Conv2D(filters=256, kernel_size=(3, 3), activation=hidden_activation, padding="valid"),
-        tfl.Conv2D(filters=128, kernel_size=(1, 1), activation=hidden_activation, padding="same"),
-        tfl.Conv2D(filters=5, kernel_size=(1, 1), activation="softmax", padding="same"),
-        tfl.Reshape([5])
+        tfl.Dense(units=100, activation=hidden_activation),
+        tfl.Dropout(droput_1),
+        tfl.Dense(units=5, activation="softmax")
     ]),
 
+    tfm.Sequential([
+        tfl.Dense(units=125, activation=hidden_activation),
+        tfl.Dropout(droput_1),
+        tfl.Dense(units=75, activation=hidden_activation),
+        tfl.Dropout(droput_2),
+        tfl.Dense(units=5, activation="softmax")
+    ]),
 
+    tfm.Sequential([
+        tfl.Dense(units=150, activation=hidden_activation),
+        tfl.Dropout(droput_1),
+        tfl.Dense(units=100, activation=hidden_activation),
+        tfl.Dropout(droput_2),
+        tfl.Dense(units=50, activation=hidden_activation),
+        tfl.Dropout(droput_3),
+        tfl.Dense(units=5, activation="softmax")
+    ]),
 
     tfm.Sequential([
         tfl.Conv2D(filters=8, kernel_size=(3, 3), activation=hidden_activation, padding="same"),
@@ -189,20 +193,6 @@ models = [
     ]),
 
     tfm.Sequential([
-        tfl.Conv2D(filters=32, kernel_size=(3, 3), activation=hidden_activation, padding="same"),
-        tfl.MaxPool2D(),
-        tfl.Conv2D(filters=64, kernel_size=(3, 3), activation=hidden_activation, padding="same"),
-        tfl.MaxPool2D(),
-        tfl.Conv2D(filters=128, kernel_size=(3, 3), activation=hidden_activation, padding="same"),
-        tfl.MaxPool2D(),
-        tfl.Flatten(),
-        tfl.Dropout(droput_1),
-        tfl.Dense(units=256, activation=hidden_activation),
-        tfl.Dropout(droput_2),
-        tfl.Dense(units=5, activation="softmax"),
-    ]),
-
-    tfm.Sequential([
         tfl.Conv2D(filters=8, kernel_size=(5, 5), activation=hidden_activation, padding="valid"),
         tfl.MaxPool2D(),
         tfl.Conv2D(filters=16, kernel_size=(3, 3), activation=hidden_activation, padding="valid"),
@@ -227,42 +217,44 @@ models = [
         tfl.Dropout(droput_2),
         tfl.Dense(units=5, activation="softmax"),
     ]),
-
-    tfm.Sequential([
-        tfl.Conv2D(filters=32, kernel_size=(5, 5), activation=hidden_activation, padding="valid"),
-        tfl.MaxPool2D(),
-        tfl.Conv2D(filters=64, kernel_size=(3, 3), activation=hidden_activation, padding="valid"),
-        tfl.MaxPool2D(),
-        tfl.Conv2D(filters=128, kernel_size=(3, 3), activation=hidden_activation, padding="valid"),
-        tfl.Flatten(),
-        tfl.Dropout(droput_1),
-        tfl.Dense(units=256, activation=hidden_activation),
-        tfl.Dropout(droput_2),
-        tfl.Dense(units=5, activation="softmax"),
-    ]),
 ]
 
 model_names = [
-    "baseline", 
-    "CONV_DENS_1_small", "CONV_DENS_1_medium", "CONV_DENS_1_large", 
-    "CONV_DENS_2_small", "CONV_DENS_2_medium", "CONV_DENS_2_large", 
-    "only_CONV_small", "only_CONV_medium", "only_CONV_large",
-    "CONV_DENS_1_small_reg", "CONV_DENS_1_medium_reg", "CONV_DENS_1_large_reg", 
-    "CONV_DENS_2_small_reg", "CONV_DENS_2_medium_reg", "CONV_DENS_2_large_reg"
+    "baseline",
+    "only_DENS_S", "only_DENS_M", "only_DENS_L",
+    "CONV_DENS_1_S", "CONV_DENS_1_L", 
+    "CONV_DENS_2_S", "CONV_DENS_2_L", 
+    "only_CONV_S", "only_CONV_L",
+    "only_DENS_S_dropout", "only_DENS_M_dropout", "only_DENS_L_dropout",
+    "CONV_DENS_1_S_dropout", "CONV_DENS_1_L_dropout", 
+    "CONV_DENS_2_S_dropout", "CONV_DENS_2_L_dropout"
 ]
 
-table_header = ["Total parameters", "Trainable parameters", "Non-trainable parameters", "Size", "Optimized size", "Training time", "FLOPS", "Test accuracy", "Lite test accuracy", "Optimized lite test accuracy"]
+model_data_set = [
+    0,
+    0, 0, 0,
+    1, 1,
+    1, 1,
+    1, 1,
+    0, 0, 0,
+    1, 1,
+    1, 1,
+]
+
+table_header = ["Total parameters", "Trainable parameters", "Non-trainable parameters", "Size", "Optimized size", 
+                "Training time", "FLOPS", "Test accuracy", "Optimized test accuracy"]
 
 if __name__ == "__main__":
-    X_train, X_test, y_train, y_test = load_data_sets()
+    data_sets = [data_loaders.load_as_array(), data_loaders.load_as_images()]
     results = {}
     
-    for model, model_name in zip(models, model_names):
+    for model, model_name, data_set in zip(models, model_names, model_data_set):
+        X_train, X_test, y_train, y_test = data_sets[data_set]
         results[model_name] = {}
         results_model = results[model_name]
 
         # get weights for the given seed
-        model.build((None, IMAGE_WIDTH, IMAGE_WIDTH, 1))
+        model.build(X_train.shape)
         weights = model.get_weights()
 
         # get the best number of epochs based on validation data set
@@ -292,17 +284,7 @@ if __name__ == "__main__":
         results_file.close()
         results_model["Size"] = os.path.getsize(f"models/{model_name}.tflite")
         os.system(f'echo "const unsigned char model[] = {{" > models/{model_name}.h && cat models/{model_name}.tflite | xxd -i >> models/{model_name}.h && echo "}};" >> models/{model_name}.h && rm -f models/{model_name}.tflite')
-
-        interpreter = tf.lite.Interpreter(model_content=tflite_model)
-        interpreter.allocate_tensors()
-        input_index = interpreter.get_input_details()[0]["index"]
-        output_index = interpreter.get_output_details()[0]["index"]
-        accuracy = 0
-        for i, sample in enumerate(X_test):
-            interpreter.set_tensor(input_index, np.expand_dims(sample, 0))
-            interpreter.invoke()
-            accuracy += np.argmax(y_test[i]) == np.argmax(interpreter.get_tensor(output_index)[0])
-        results_model["Lite test accuracy"] = f"{accuracy / X_test.shape[0] * 100:.2f} \\%"
+        del tflite_model
 
         converter = tf.lite.TFLiteConverter.from_keras_model(model)
         converter.optimizations = [tf.lite.Optimize.DEFAULT]
@@ -316,7 +298,6 @@ if __name__ == "__main__":
         results_file.close()
         results_model["Optimized size"] = os.path.getsize(f"models/{model_name}.tflite")
         os.system(f'echo "const unsigned char model[] = {{" > models/{model_name}_opt.h && cat models/{model_name}.tflite | xxd -i >> models/{model_name}_opt.h && echo "}};" >> models/{model_name}_opt.h && rm -f models/{model_name}.tflite')
-        del tflite_model
 
         interpreter = tf.lite.Interpreter(model_content=tflite_model_opt)
         interpreter.allocate_tensors()
@@ -328,14 +309,14 @@ if __name__ == "__main__":
             interpreter.set_tensor(input_index, np.expand_dims(sample / input_scale + input_zero_point, 0).astype(np.int8))
             interpreter.invoke()
             accuracy += np.argmax(y_test[i]) == np.argmax(interpreter.get_tensor(output_index)[0]) # rescaling is not needed
-        results_model["Optimized lite test accuracy"] = f"{accuracy / X_test.shape[0] * 100:.2f} \\%"
+        results_model["Optimized test accuracy"] = f"{accuracy / X_test.shape[0] * 100:.2f} \\%"
         del tflite_model_opt
 
     with open("network/model_search_results.tex", "w") as results_file:
         print = functools.partial(print, file=results_file)
         row_end = "\\\\"
         backslash_underscore = "\\_"
-        print("\\begin{table}[ht]", "\\tiny", "\\center", "\\begin{tabular}{ |c|c|c|c|c|c|c|c|c|c|c| }", sep="\n")        
+        print("\\begin{table}[ht]", "\\tiny", "\\center", "\\begin{tabular}{ |c|c|c|c|c|c|c|c|c|c| }", sep="\n")        
         print("\\hline")
 
         print("& ", end="")

@@ -2,7 +2,7 @@ import serial
 import numpy as np
 import matplotlib.pyplot as plt
 
-PORT = '/dev/ttyACM0'
+PORT = "/dev/ttyACM0"
 BAUD_RATE = 9600
 IMAGE_HEIGHT = 40
 IMAGE_WIDTH = 40

@@ -15,11 +15,6 @@ using namespace tflite;
 
 const float ACCELERATION_TRESHOLD = 1.5;
 
-const unsigned IMAGE_HEIGHT = 40;
-const unsigned IMAGE_WIDTH = 40;
-const unsigned IMAGE_INDEX = 39;
-const unsigned NUMNBER_OF_IMAGE_PIXELS = IMAGE_HEIGHT * IMAGE_WIDTH;
-
 const unsigned SAMPLES_PER_SPELL = 119;
 const unsigned SAMPLES_DOUBLED = 119 << 1;
 const unsigned SAMPLES_TRIPPELED = SAMPLES_PER_SPELL + SAMPLES_DOUBLED;
@@ -130,20 +125,15 @@ void calculate_stroke()
 	}
 }
 
-void rasterize_stroke()
+void load_stroke()
 {
-	float shift_x = 1.0f / (max_x - min_x) * IMAGE_INDEX;
-	float shift_y = 1.0f / (max_y - min_y) * IMAGE_INDEX;
-	float color = (255.0f - SAMPLES_PER_SPELL + 1.0f) / 255.0f;
-	float color_increase = 1.0f / 255.0f;
+	float shift_x = 1.0f / (max_x - min_x);
+	float shift_y = 1.0f / (max_y - min_y);
 
 	for (unsigned i = 0; i < SAMPLES_DOUBLED; i += 2)
 	{
-		unsigned x = static_cast<unsigned>(roundf((stroke_points[i] - min_x) * shift_x));
-		unsigned y = static_cast<unsigned>(roundf((stroke_points[i + 1] - min_y) * shift_y));
-
-		input_tensor->data.f[y * IMAGE_WIDTH + x] = color;
-		color += color_increase;
+		input_tensor->data.f[i] = (stroke_points[i] - min_x) * shift_x;
+		input_tensor->data.f[i + 1] = (stroke_points[i + 1] - min_y) * shift_y;
 	}
 }
 
@@ -177,12 +167,12 @@ void setup()
 
 void loop()
 {
-	memset(input_tensor->data.f, 0, NUMNBER_OF_IMAGE_PIXELS * sizeof(float));
+	
 	Serial.println();
-	Serial.println();
-	Serial.println("Get ready.");
-	delay(1500);
-	Serial.println("Perform spell.");
+	Serial.println("Get your magic wand ready.");
+	delay(2000);
+	Serial.println("Now is the time to perform a spell.");
+
 	while (true)
 	{
 		if (IMU.accelerationAvailable())
@@ -195,7 +185,7 @@ void loop()
 			}
 		}
 	}
-	Serial.println("Capuring spell...");
+	Serial.println("Someone is performing magic here...");
 
 	for (unsigned i = 0; i < SAMPLES_TRIPPELED;)
 	{
@@ -208,14 +198,13 @@ void loop()
 			i += 3;
 		}
 	}
-	Serial.println("Spell captured.");
+	Serial.println("Let's see how good of a magician are you...");
 
 	average_acceleration();
 	calculate_orientation();
 	calculate_stroke();
-	rasterize_stroke();
+	load_stroke();
 
-	Serial.println("Recognizing...");
 	TfLiteStatus invokeStatus = interpreter->Invoke();
 	if (invokeStatus != kTfLiteOk)
 	{

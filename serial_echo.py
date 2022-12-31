@@ -1,6 +1,6 @@
 import serial
 
-PORT = '/dev/ttyACM0'
+PORT = "/dev/ttyACM0"
 BAUD_RATE = 9600
 
 arduino = serial.Serial(PORT, BAUD_RATE)

@@ -1,6 +1,7 @@
 
 #include <Arduino_LSM9DS1.h>
 #include <limits>
+#include <cstdint>
 #include <cstring>
 
 #include <TensorFlowLite.h>
@@ -14,11 +15,6 @@ using namespace std;
 using namespace tflite;
 
 const float ACCELERATION_TRESHOLD = 1.5;
-
-const unsigned IMAGE_HEIGHT = 40;
-const unsigned IMAGE_WIDTH = 40;
-const unsigned IMAGE_INDEX = 39;
-const unsigned NUMNBER_OF_IMAGE_PIXELS = IMAGE_HEIGHT * IMAGE_WIDTH;
 
 const unsigned SAMPLES_PER_SPELL = 119;
 const unsigned SAMPLES_DOUBLED = 119 << 1;
@@ -43,10 +39,8 @@ const Model *tf_model = nullptr;
 MicroInterpreter *interpreter = nullptr;
 TfLiteTensor *input_tensor = nullptr;
 TfLiteTensor *output_tensor = nullptr;
-float input_scale = 0.0f;
+float inverse_input_scale = 0.0f;
 float input_zero_point = 0.0f;
-float output_scale = 0.0f;
-float output_zero_point = 0.0f;
 
 const unsigned TENSOR_ARENA_SIZE = 128 * 1024;
 byte tensor_arena[TENSOR_ARENA_SIZE] __attribute__((aligned(16)));
@@ -134,20 +128,15 @@ void calculate_stroke()
 	}
 }
 
-void rasterize_stroke()
+void load_stroke()
 {
-	float shift_x = 1.0f / (max_x - min_x) * IMAGE_INDEX;
-	float shift_y = 1.0f / (max_y - min_y) * IMAGE_INDEX;
-	float color = (255.0f - 2 * SAMPLES_PER_SPELL + 2.0f) / 255.0f / input_scale + input_zero_point;
-	float color_increase = 2.0f / 255.0f / input_scale;
-
+	float shift_x = 1.0f / (max_x - min_x);
+	float shift_y = 1.0f / (max_y - min_y);
+		
 	for (unsigned i = 0; i < SAMPLES_DOUBLED; i += 2)
 	{
-		unsigned x = static_cast<unsigned>(roundf((stroke_points[i] - min_x) * shift_x));
-		unsigned y = static_cast<unsigned>(roundf((stroke_points[i + 1] - min_y) * shift_y));
-
-		input_tensor->data.int8[y * IMAGE_WIDTH + x] = color;
-		color += color_increase;
+		input_tensor->data.int8[i] = static_cast<int8_t>((stroke_points[i] - min_x) * shift_x * inverse_input_scale + input_zero_point);
+		input_tensor->data.int8[i + 1] = static_cast<unsigned>((stroke_points[i + 1] - min_y) * shift_y * inverse_input_scale + input_zero_point);
 	}
 }
 
@@ -178,21 +167,17 @@ void setup()
 	input_tensor = interpreter->input(0);
 	output_tensor = interpreter->output(0);
 
-	input_scale = input_tensor->params.scale;
+	inverse_input_scale = 1 / input_tensor->params.scale;
 	input_zero_point = input_tensor->params.zero_point;
-	output_scale = output_tensor->params.scale;
-	output_zero_point = output_tensor->params.zero_point;
 }
 
 void loop()
 {
-	// reset the input tensor
-	memset(input_tensor->data.int8, input_zero_point, NUMNBER_OF_IMAGE_PIXELS * sizeof(int8_t));
-
 	Serial.println();
 	Serial.println("Get your magic wand ready.");
 	delay(2000);
-	Serial.println("Now is the time to perform a spell.");
+	Serial.println("Now is the time to show off, perform a spell.");
+
 	while (true)
 	{
 		if (IMU.accelerationAvailable())
@@ -218,12 +203,12 @@ void loop()
 			i += 3;
 		}
 	}
-	Serial.println("Let's see how good of a magicial are you...");
+	Serial.println("Let's see how good of a magician are you...");
 
 	average_acceleration();
 	calculate_orientation();
 	calculate_stroke();
-	rasterize_stroke();
+	load_stroke();
 
 	TfLiteStatus invokeStatus = interpreter->Invoke();
 	if (invokeStatus != kTfLiteOk)
@@ -233,21 +218,18 @@ void loop()
 			;
 	}
 
-	float best_score = numeric_limits<float>::min();
+	int8_t best_score = INT8_MIN;
 	unsigned best_label;
 	for (unsigned i = 0; i < NUMBER_OF_LABELS; i++)
 	{
-		float score = (output_tensor->data.int8[i] - output_zero_point) * output_scale;
-		Serial.print(LABELS[i]);
-		Serial.print(": ");
-		Serial.print(score * 100.0f, 2);
-		Serial.println(" %");
+		int8_t score = output_tensor->data.int8[i];
 		if (score > best_score)
 		{
 			best_score = score;
 			best_label = i;
 		}
 	}
+
 	Serial.println();
 	Serial.print("You performed: ");
 	Serial.println(LABELS[best_label]);
