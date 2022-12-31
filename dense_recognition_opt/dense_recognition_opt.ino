@@ -22,7 +22,9 @@ const unsigned SAMPLES_TRIPPELED = SAMPLES_PER_SPELL + SAMPLES_DOUBLED;
 const float DELTA_T = 1.0f / SAMPLES_PER_SPELL;
 
 const unsigned NUMBER_OF_LABELS = 5;
-const char* LABELS[NUMBER_OF_LABELS] = { "Avada Kedavra", "Locomotor", "Arresto Momentum", "Revelio", "Alohomora" };
+const char* LABELS[NUMBER_OF_LABELS] = { "Oh no! 'Avada Kedavra' RIP :(.", "Every small kid here can move things with 'Locomotor' :).", 
+										 "Red light! 'Arresto Momentum' stop moving.", "You can't see it, 'Revelio', you can see it.", 
+										 "'Alohomora' is not meant for stealing, get out!" };
 
 float acceleration_average_x, acceleration_average_y;
 float orientation_average_x, orientation_average_y;
@@ -231,6 +233,6 @@ void loop()
 	}
 
 	Serial.println();
-	Serial.print("You performed: ");
 	Serial.println(LABELS[best_label]);
+	delay(1000);
 }
