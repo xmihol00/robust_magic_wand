@@ -2,6 +2,7 @@
 #include <Arduino_LSM9DS1.h>
 #include <limits>
 #include <cstring>
+#include <cstdint>
 
 #include <TensorFlowLite.h>
 #include <tensorflow/lite/micro/all_ops_resolver.h>
@@ -26,7 +27,9 @@ const unsigned SAMPLES_TRIPPELED = SAMPLES_PER_SPELL + SAMPLES_DOUBLED;
 const float DELTA_T = 1.0f / SAMPLES_PER_SPELL;
 
 const unsigned NUMBER_OF_LABELS = 5;
-const char* LABELS[NUMBER_OF_LABELS] = { "Avada Kedavra", "Locomotor", "Arresto Momentum", "Revelio", "Alohomora" };
+const char* LABELS[NUMBER_OF_LABELS] = { "Oh no! 'Avada Kedavra' RIP :(.", "Every small kid here can move things with 'Locomotor' :).", 
+										 "Red light! 'Arresto Momentum' stop moving.", "You can't see it, 'Revelio', you can see it.", 
+										 "'Alohomora' is not meant for stealing, get out!" };
 
 float acceleration_average_x, acceleration_average_y;
 float orientation_average_x, orientation_average_y;
@@ -43,6 +46,10 @@ const Model *tf_model = nullptr;
 MicroInterpreter *interpreter = nullptr;
 TfLiteTensor *input_tensor = nullptr;
 TfLiteTensor *output_tensor = nullptr;
+float input_scale = 0.0f;
+float input_zero_point = 0.0f;
+float output_scale = 0.0f;
+float output_zero_point = 0.0f;
 
 const unsigned TENSOR_ARENA_SIZE = 128 * 1024;
 byte tensor_arena[TENSOR_ARENA_SIZE] __attribute__((aligned(16)));
@@ -134,15 +141,15 @@ void load_stroke()
 {
 	float shift_x = 1.0f / (max_x - min_x) * IMAGE_INDEX;
 	float shift_y = 1.0f / (max_y - min_y) * IMAGE_INDEX;
-	float color = (255.0f - SAMPLES_PER_SPELL + 1.0f) / 255.0f;
-	float color_increase = 1.0f / 255.0f;
+	float color = (255.0f - 2 * SAMPLES_PER_SPELL + 2.0f) / 255.0f / input_scale + input_zero_point;
+	float color_increase = 2.0f / 255.0f / input_scale;
 
 	for (unsigned i = 0; i < SAMPLES_DOUBLED; i += 2)
 	{
 		unsigned x = static_cast<unsigned>(roundf((stroke_points[i] - min_x) * shift_x));
 		unsigned y = static_cast<unsigned>(roundf((stroke_points[i + 1] - min_y) * shift_y));
 
-		input_tensor->data.f[y * IMAGE_WIDTH + x] = color;
+		input_tensor->data.int8[y * IMAGE_WIDTH + x] = static_cast<int8_t>(color);
 		color += color_increase;
 	}
 }
@@ -173,16 +180,22 @@ void setup()
 	interpreter->AllocateTensors();
 	input_tensor = interpreter->input(0);
 	output_tensor = interpreter->output(0);
+
+	input_scale = input_tensor->params.scale;
+	input_zero_point = input_tensor->params.zero_point;
+	output_scale = output_tensor->params.scale;
+	output_zero_point = output_tensor->params.zero_point;
 }
 
 void loop()
 {
-	memset(input_tensor->data.f, 0, NUMNBER_OF_IMAGE_PIXELS * sizeof(float));
+	// reset the input tensor
+	memset(input_tensor->data.int8, input_zero_point, NUMNBER_OF_IMAGE_PIXELS * sizeof(int8_t));
 
 	Serial.println();
 	Serial.println("Get your magic wand ready.");
 	delay(2000);
-	Serial.println("Now is the time to perform a spell.");
+	Serial.println("Now is the time to show off, perform a spell.");
 
 	while (true)
 	{
@@ -224,22 +237,19 @@ void loop()
 			;
 	}
 
-	float best_score = numeric_limits<float>::min();
+	int8_t best_score = INT8_MIN;
 	unsigned best_label;
 	for (unsigned i = 0; i < NUMBER_OF_LABELS; i++)
 	{
-		float score = output_tensor->data.f[i];
-		Serial.print(LABELS[i]);
-		Serial.print(": ");
-		Serial.print(score * 100.0f, 2);
-		Serial.println(" %");
+		int8_t score = output_tensor->data.int8[i];
 		if (score > best_score)
 		{
 			best_score = score;
 			best_label = i;
 		}
 	}
+
 	Serial.println();
-	Serial.print("You performed: ");
 	Serial.println(LABELS[best_label]);
+	delay(1000);
 }

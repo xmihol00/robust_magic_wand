@@ -7,7 +7,7 @@ IMAGE_WIDTH_HEIGHT = 40
 IMAGE_WIDTH_HEIGHT_INDEX = IMAGE_WIDTH_HEIGHT - 1
 
 if len(sys.argv) < 2:
-    print("Specify file name relative to the script.", file=sys.stderr)
+    print("Specify data set file name.", file=sys.stderr)
     exit(1)
 
 orientation_samples = np.zeros((SAMPLES_PER_MEASUREMENT, 3))

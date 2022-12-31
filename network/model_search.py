@@ -29,7 +29,6 @@ np.random.seed(SEED)
 random.seed(SEED)
 tf.random.set_seed(SEED)
 
-
 def representative_dataset(data_set):
     for sample in data_set:
         yield [np.expand_dims(sample, 0)]
