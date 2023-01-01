@@ -1,6 +1,6 @@
 import tensorflow as tf
 import tensorflow.keras.utils as tfu
-import os
+import glob
 import sklearn.model_selection as skms
 import numpy as np
 import random
@@ -44,8 +44,8 @@ def get_stroke_samples(data):
 def load_as_images(one_hot=True):
     data = ""
     labels = []
-    for i, file_name in enumerate(os.listdir("./data")):
-        file = open(f"./data/{file_name}", "r")
+    for i, file_name in enumerate(glob.glob("data/*.csv")):
+        file = open(file_name, "r")
         file.readline() # skip header
         read_lines = file.read()
         labels += [i] * (read_lines.count("\n") // LINES_PER_MEASUREMENT)
@@ -73,8 +73,8 @@ def load_as_images(one_hot=True):
 def load_as_array(one_hot=True):
     data = ""
     labels = []
-    for i, file_name in enumerate(os.listdir("./data")):
-        file = open(f"./data/{file_name}", "r")
+    for i, file_name in enumerate(glob.glob("data/*.csv")):
+        file = open(file_name, "r")
         file.readline() # skip header
         read_lines = file.read()
         labels += [i] * (read_lines.count("\n") // LINES_PER_MEASUREMENT)
