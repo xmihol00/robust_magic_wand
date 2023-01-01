@@ -16,7 +16,7 @@ import functools
 
 import data_loaders
 
-SEED = 42
+SEED = 12211951
 IMAGE_HEIGHT = 40
 IMAGE_WIDTH = 40
 SAMPLES_PER_MEASUREMENT = 119

@@ -1,6 +1,6 @@
 #include <Arduino_LSM9DS1.h>
 
-const float ACCELERATION_THRESHOLD = 1.5;
+const float ACCELERATION_THRESHOLD = 3.0;
 const unsigned SAMPLES_PER_SPELL = 119;
 
 void setup()
@@ -24,7 +24,7 @@ void loop()
         if (IMU.accelerationAvailable())
         {
             IMU.readAcceleration(x, y, z);
-            if (fabs(y) + fabs(z) >= ACCELERATION_THRESHOLD)
+            if (fabs(x) + fabs(y) + fabs(z) >= ACCELERATION_THRESHOLD)
             {
                 break;
             }

@@ -5,7 +5,7 @@ import sklearn.model_selection as skms
 import numpy as np
 import random
 
-SEED = 42
+SEED = 12211951
 IMAGE_HEIGHT = 40
 IMAGE_WIDTH = 40
 SAMPLES_PER_MEASUREMENT = 119
