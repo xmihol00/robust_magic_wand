@@ -61,13 +61,6 @@ models = [
     ]),
 
     tfm.Sequential([
-        tfl.Dense(units=150, activation=hidden_activation),
-        tfl.Dense(units=100, activation=hidden_activation),
-        tfl.Dense(units=50, activation=hidden_activation),
-        tfl.Dense(units=5, activation="softmax")
-    ]),
-
-    tfm.Sequential([
         tfl.Conv2D(filters=8, kernel_size=(3, 3), activation=hidden_activation, padding="same"),
         tfl.MaxPool2D(),
         tfl.Conv2D(filters=16, kernel_size=(3, 3), activation=hidden_activation, padding="same"),
@@ -86,28 +79,6 @@ models = [
         tfl.MaxPool2D(),
         tfl.Conv2D(filters=64, kernel_size=(3, 3), activation=hidden_activation, padding="same"),
         tfl.MaxPool2D(),
-        tfl.Flatten(),
-        tfl.Dense(units=128, activation=hidden_activation),
-        tfl.Dense(units=5, activation="softmax"),
-    ]),
-
-    tfm.Sequential([
-        tfl.Conv2D(filters=8, kernel_size=(5, 5), activation=hidden_activation, padding="valid"),
-        tfl.MaxPool2D(),
-        tfl.Conv2D(filters=16, kernel_size=(3, 3), activation=hidden_activation, padding="valid"),
-        tfl.MaxPool2D(),
-        tfl.Conv2D(filters=32, kernel_size=(3, 3), activation=hidden_activation, padding="valid"),
-        tfl.Flatten(),
-        tfl.Dense(units=64, activation=hidden_activation),
-        tfl.Dense(units=5, activation="softmax"),
-    ]),
-
-    tfm.Sequential([
-        tfl.Conv2D(filters=16, kernel_size=(5, 5), activation=hidden_activation, padding="valid"),
-        tfl.MaxPool2D(),
-        tfl.Conv2D(filters=32, kernel_size=(3, 3), activation=hidden_activation, padding="valid"),
-        tfl.MaxPool2D(),
-        tfl.Conv2D(filters=64, kernel_size=(3, 3), activation=hidden_activation, padding="valid"),
         tfl.Flatten(),
         tfl.Dense(units=128, activation=hidden_activation),
         tfl.Dense(units=5, activation="softmax"),
@@ -154,16 +125,6 @@ models = [
     ]),
 
     tfm.Sequential([
-        tfl.Dense(units=150, activation=hidden_activation),
-        tfl.Dropout(droput_1),
-        tfl.Dense(units=100, activation=hidden_activation),
-        tfl.Dropout(droput_2),
-        tfl.Dense(units=50, activation=hidden_activation),
-        tfl.Dropout(droput_3),
-        tfl.Dense(units=5, activation="softmax")
-    ]),
-
-    tfm.Sequential([
         tfl.Conv2D(filters=8, kernel_size=(3, 3), activation=hidden_activation, padding="same"),
         tfl.MaxPool2D(),
         tfl.Conv2D(filters=16, kernel_size=(3, 3), activation=hidden_activation, padding="same"),
@@ -193,10 +154,50 @@ models = [
 
     tfm.Sequential([
         tfl.Conv2D(filters=8, kernel_size=(5, 5), activation=hidden_activation, padding="valid"),
+        tfl.BatchNormalization(),
         tfl.MaxPool2D(),
         tfl.Conv2D(filters=16, kernel_size=(3, 3), activation=hidden_activation, padding="valid"),
+        tfl.BatchNormalization(),
         tfl.MaxPool2D(),
         tfl.Conv2D(filters=32, kernel_size=(3, 3), activation=hidden_activation, padding="valid"),
+        tfl.BatchNormalization(),
+        tfl.MaxPool2D(),
+        tfl.Conv2D(filters=64, kernel_size=(3, 3), activation=hidden_activation, padding="valid"),
+        tfl.BatchNormalization(),
+        tfl.Conv2D(filters=32, kernel_size=(1, 1), activation=hidden_activation, padding="same"),
+        tfl.BatchNormalization(),
+        tfl.Conv2D(filters=5, kernel_size=(1, 1), activation="softmax", padding="same"),
+        tfl.Reshape([5])
+    ]),
+
+    tfm.Sequential([
+        tfl.Conv2D(filters=16, kernel_size=(5, 5), activation=hidden_activation, padding="valid"),
+        tfl.BatchNormalization(),
+        tfl.MaxPool2D(),
+        tfl.Conv2D(filters=32, kernel_size=(3, 3), activation=hidden_activation, padding="valid"),
+        tfl.BatchNormalization(),
+        tfl.MaxPool2D(),
+        tfl.Conv2D(filters=64, kernel_size=(3, 3), activation=hidden_activation, padding="valid"),
+        tfl.BatchNormalization(),
+        tfl.MaxPool2D(),
+        tfl.Conv2D(filters=128, kernel_size=(3, 3), activation=hidden_activation, padding="valid"),
+        tfl.BatchNormalization(),
+        tfl.Conv2D(filters=64, kernel_size=(1, 1), activation=hidden_activation, padding="same"),
+        tfl.BatchNormalization(),
+        tfl.Conv2D(filters=5, kernel_size=(1, 1), activation="softmax", padding="same"),
+        tfl.Reshape([5])
+    ]),
+
+    tfm.Sequential([
+        tfl.Conv2D(filters=8, kernel_size=(3, 3), activation=hidden_activation, padding="same"),
+        tfl.BatchNormalization(),
+        tfl.MaxPool2D(),
+        tfl.Conv2D(filters=16, kernel_size=(3, 3), activation=hidden_activation, padding="same"),
+        tfl.BatchNormalization(),
+        tfl.MaxPool2D(),
+        tfl.Conv2D(filters=32, kernel_size=(3, 3), activation=hidden_activation, padding="same"),
+        tfl.BatchNormalization(),
+        tfl.MaxPool2D(),
         tfl.Flatten(),
         tfl.Dropout(droput_1),
         tfl.Dense(units=64, activation=hidden_activation),
@@ -205,39 +206,43 @@ models = [
     ]),
 
     tfm.Sequential([
-        tfl.Conv2D(filters=16, kernel_size=(5, 5), activation=hidden_activation, padding="valid"),
+        tfl.Conv2D(filters=16, kernel_size=(3, 3), activation=hidden_activation, padding="same"),
+        tfl.BatchNormalization(),
         tfl.MaxPool2D(),
-        tfl.Conv2D(filters=32, kernel_size=(3, 3), activation=hidden_activation, padding="valid"),
+        tfl.Conv2D(filters=32, kernel_size=(3, 3), activation=hidden_activation, padding="same"),
+        tfl.BatchNormalization(),
         tfl.MaxPool2D(),
-        tfl.Conv2D(filters=64, kernel_size=(3, 3), activation=hidden_activation, padding="valid"),
+        tfl.Conv2D(filters=64, kernel_size=(3, 3), activation=hidden_activation, padding="same"),
+        tfl.BatchNormalization(),
+        tfl.MaxPool2D(),
         tfl.Flatten(),
         tfl.Dropout(droput_1),
         tfl.Dense(units=128, activation=hidden_activation),
         tfl.Dropout(droput_2),
         tfl.Dense(units=5, activation="softmax"),
-    ]),
+    ])
 ]
 
 model_names = [
     "baseline_linear",
-    "only_DENS_S", "only_DENS_M", "only_DENS_L",
-    "CONV_DENS_1_S", "CONV_DENS_1_L", 
-    "CONV_DENS_2_S", "CONV_DENS_2_L", 
-    "only_CONV_S", "only_CONV_L",
-    "only_DENS_S_DO", "only_DENS_M_DO", "only_DENS_L_DO",
-    "CONV_DENS_1_S_DO", "CONV_DENS_1_L_DO", 
-    "CONV_DENS_2_S_DO", "CONV_DENS_2_L_DO"
+    "only_DENS_S", "only_DENS_M",
+    "CONV_DENS_S", "CONV_DENS_M", 
+    "only_CONV_S", "only_CONV_M",
+    "only_DENS_DO_S", "only_DENS_DO_M",
+    "CONV_DENS_DO_S", "CONV_DENS_DO_M",
+    "only_CONV_BN_S", "only_CONV_BN_M",
+    "CONV_DENS_BN_DO_S", "CONV_DENS_BN_DO_M",
 ]
 
 model_data_set = [
     0,
-    0, 0, 0,
+    0, 0,
     1, 1,
     1, 1,
+    0, 0,
     1, 1,
-    0, 0, 0,
     1, 1,
-    1, 1,
+    1, 1
 ]
 
 table_header = ["Total parameters", "Trainable parameters", "Non-trainable parameters", "Size", "Optimized size", 
@@ -268,7 +273,7 @@ if __name__ == "__main__":
 
         # get the best number of epochs based on validation data set
         model.compile(optimizer="adam", loss="categorical_crossentropy", metrics=["accuracy"])
-        history = model.fit(X_train, y_train, epochs=100, validation_split=0.2, batch_size=16, verbose=2,
+        history = model.fit(X_train, y_train, epochs=100, validation_split=0.2, batch_size=32, verbose=2,
                             callbacks=[tfc.EarlyStopping(monitor="val_accuracy", patience=3, mode="max", restore_best_weights=False)]).history
         model.set_weights(weights)
         epochs = len(history["loss"]) - 3
@@ -277,7 +282,7 @@ if __name__ == "__main__":
         # train on the whole train data set
         model.compile(optimizer="adam", loss="categorical_crossentropy", metrics=["accuracy"])
         train_start = time.time()
-        model.fit(X_train, y_train, epochs=epochs, validation_split=0.0, batch_size=16, verbose=2)
+        model.fit(X_train, y_train, epochs=epochs, validation_split=0.0, batch_size=32, verbose=2)
         results_model["Training time"] = f"{time.time() - train_start:.2f} s"
 
         # predict and evaluate the prediction
