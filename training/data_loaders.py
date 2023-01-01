@@ -1,7 +1,7 @@
 import tensorflow as tf
 import tensorflow.keras.utils as tfu
 import os
-import sklearn.model_selection as skm
+import sklearn.model_selection as skms
 import numpy as np
 import random
 
@@ -63,13 +63,12 @@ def load_as_images(one_hot=True):
         image[pixels[:, 1], pixels[:, 0]] = colors
         images[i] = image.reshape(IMAGE_WIDTH, IMAGE_HEIGHT, 1).astype(np.float32)
 
-    X_train, X_test, y_train, y_test = skm.train_test_split(images, labels, test_size=0.2, random_state=SEED)
+    X_train, X_test, y_train, y_test = skms.train_test_split(images, labels, test_size=0.2, random_state=SEED)
     if one_hot:
         # one-hot encoding of labels
         y_train = tfu.to_categorical(y_train, num_classes=5)
-        y_test = tfu.to_categorical(y_test, num_classes=5)
 
-    return X_train, X_test, y_train, y_test
+    return X_train, X_test, y_train, np.array(y_test)
 
 def load_as_array(one_hot=True):
     data = ""
@@ -89,11 +88,10 @@ def load_as_array(one_hot=True):
         stroke_samples /= np.max(stroke_samples, axis=0) # normalize values from 0 to 1
         arrays[i] = stroke_samples.reshape(-1)
 
-    X_train, X_test, y_train, y_test = skm.train_test_split(arrays, labels, test_size=0.2, random_state=SEED)
+    X_train, X_test, y_train, y_test = skms.train_test_split(arrays, labels, test_size=0.2, random_state=SEED)
     if one_hot:
         # one-hot encoding of labels
         y_train = tfu.to_categorical(y_train, num_classes=5)
-        y_test = tfu.to_categorical(y_test, num_classes=5)
 
-    return X_train, X_test, y_train, y_test
+    return X_train, X_test, y_train, np.array(y_test)
     

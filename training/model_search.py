@@ -1,13 +1,11 @@
+import sys
 import os
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = '3'
 import tensorflow as tf
-import tensorflow.keras.utils as tfu
 import tensorflow.keras.models as tfm
 import tensorflow.keras.layers as tfl
 import tensorflow.keras.callbacks as tfc
-import tensorflow.keras.regularizers as tfr
-import tensorflow.keras.initializers as tfi
-import sklearn.model_selection as skm
+import sklearn.metrics as skm
 import numpy as np
 import matplotlib.pyplot as plt
 import random
@@ -24,6 +22,8 @@ IMAGE_WIDTH = 40
 SAMPLES_PER_MEASUREMENT = 119
 LINES_PER_MEASUREMENT = SAMPLES_PER_MEASUREMENT + 1
 IMAGE_WIDTH_HEIGHT_INDEX = IMAGE_WIDTH - 1
+NUMBER_OF_LABELS = 5
+LABELS = ["Avada Kedavra", "Locomotor", "Arresto Momentum", "Revelio", "Alohomora"]
 
 np.random.seed(SEED)
 random.seed(SEED)
@@ -219,14 +219,14 @@ models = [
 ]
 
 model_names = [
-    "baseline",
+    "baseline_linear",
     "only_DENS_S", "only_DENS_M", "only_DENS_L",
     "CONV_DENS_1_S", "CONV_DENS_1_L", 
     "CONV_DENS_2_S", "CONV_DENS_2_L", 
     "only_CONV_S", "only_CONV_L",
-    "only_DENS_S_dropout", "only_DENS_M_dropout", "only_DENS_L_dropout",
-    "CONV_DENS_1_S_dropout", "CONV_DENS_1_L_dropout", 
-    "CONV_DENS_2_S_dropout", "CONV_DENS_2_L_dropout"
+    "only_DENS_S_DO", "only_DENS_M_DO", "only_DENS_L_DO",
+    "CONV_DENS_1_S_DO", "CONV_DENS_1_L_DO", 
+    "CONV_DENS_2_S_DO", "CONV_DENS_2_L_DO"
 ]
 
 model_data_set = [
@@ -241,9 +241,19 @@ model_data_set = [
 ]
 
 table_header = ["Total parameters", "Trainable parameters", "Non-trainable parameters", "Size", "Optimized size", 
-                "Training time", "FLOPS", "Test accuracy", "Optimized test accuracy"]
+                "Training time", "Epochs", "FLOPS", "Full model accuracy", "Optimized model accuracy"]
 
 if __name__ == "__main__":
+    if not os.path.isfile("training/model_search.py"):
+        print("Run the script from the root directory of the Git repository.", file=sys.stderr) 
+        exit(1)
+
+    # create output directories
+    os.makedirs("training/figures", exist_ok=True)
+    os.makedirs("training/models", exist_ok=True)
+    os.makedirs("training/results", exist_ok=True)
+
+    # load data sets
     data_sets = [data_loaders.load_as_array(), data_loaders.load_as_images()]
     results = {}
     
@@ -262,6 +272,7 @@ if __name__ == "__main__":
                             callbacks=[tfc.EarlyStopping(monitor="val_accuracy", patience=3, mode="max", restore_best_weights=False)]).history
         model.set_weights(weights)
         epochs = len(history["loss"]) - 3
+        results_model["Epochs"] = epochs
         
         # train on the whole train data set
         model.compile(optimizer="adam", loss="categorical_crossentropy", metrics=["accuracy"])
@@ -269,22 +280,34 @@ if __name__ == "__main__":
         model.fit(X_train, y_train, epochs=epochs, validation_split=0.0, batch_size=16, verbose=2)
         results_model["Training time"] = f"{time.time() - train_start:.2f} s"
 
-        # evaluate the results
-        results_model["Test accuracy"] = f"{model.evaluate(X_test, y_test, verbose=2)[1] * 100:.2f} \\%"
+        # predict and evaluate the prediction
+        predictions = model.predict(X_test, verbose=2)
+        predictions = np.argmax(predictions, axis=1)
+        results_model["Full model accuracy"] = f"{(predictions == y_test).sum() / y_test.shape[0] * 100:.2f} \\%"
+
+        # plot the full model confusion metrix
+        figure, axis = plt.subplots(2, 1, figsize=(12, 18))
+        figure.suptitle(f"{model_name} confusion matrices", fontsize=16) 
+        confusion_matrix = tf.math.confusion_matrix(y_test, predictions).numpy()
+        confusion_matrix = skm.ConfusionMatrixDisplay(confusion_matrix=confusion_matrix, display_labels=LABELS)
+        axis[0].set_title(f"Full model")
+        confusion_matrix.plot(cmap="Blues", ax=axis[0])
 
         # get the summary of the model
         model.summary(print_fn=lambda x, y=results_model: collect_model_summary(x, y))
         results_model["FLOPS"] = kf.get_flops(model, batch_size=1)
 
+        # convert the model without optimiziation (evaluation is not necessary, the results after conversion are the same)
         converter = tf.lite.TFLiteConverter.from_keras_model(model)
         tflite_model = converter.convert()
-        results_file = open(f"models/{model_name}.tflite", "wb")
+        results_file = open(f"training/models/{model_name}.tflite", "wb")
         results_file.write(tflite_model)
         results_file.close()
-        results_model["Size"] = os.path.getsize(f"models/{model_name}.tflite")
-        os.system(f'echo "const unsigned char model[] = {{" > models/{model_name}.h && cat models/{model_name}.tflite | xxd -i >> models/{model_name}.h && echo "}};" >> models/{model_name}.h && rm -f models/{model_name}.tflite')
+        results_model["Size"] = os.path.getsize(f"training/models/{model_name}.tflite")
+        os.system(f'echo "const unsigned char model[] = {{" > training/models/{model_name}.h && cat training/models/{model_name}.tflite | xxd -i >> training/models/{model_name}.h && echo "}};" >> training/models/{model_name}.h && rm -f training/models/{model_name}.tflite')
         del tflite_model
 
+        # convert the model with optimization 
         converter = tf.lite.TFLiteConverter.from_keras_model(model)
         converter.optimizations = [tf.lite.Optimize.DEFAULT]
         converter.target_spec.supported_ops = [tf.lite.OpsSet.TFLITE_BUILTINS_INT8]
@@ -292,26 +315,36 @@ if __name__ == "__main__":
         converter.inference_output_type = tf.int8
         converter.representative_dataset = lambda x=X_train: representative_dataset(x)
         tflite_model_opt = converter.convert()
-        results_file = open(f"models/{model_name}.tflite", "wb")
+        results_file = open(f"training/models/{model_name}.tflite", "wb")
         results_file.write(tflite_model_opt)
         results_file.close()
-        results_model["Optimized size"] = os.path.getsize(f"models/{model_name}.tflite")
-        os.system(f'echo "const unsigned char model[] = {{" > models/{model_name}_opt.h && cat models/{model_name}.tflite | xxd -i >> models/{model_name}_opt.h && echo "}};" >> models/{model_name}_opt.h && rm -f models/{model_name}.tflite')
+        results_model["Optimized size"] = os.path.getsize(f"training/models/{model_name}.tflite")
+        os.system(f'echo "const unsigned char model[] = {{" > training/models/{model_name}_opt.h && cat training/models/{model_name}.tflite | xxd -i >> training/models/{model_name}_opt.h && echo "}};" >> training/models/{model_name}_opt.h && rm -f training/models/{model_name}.tflite')
 
+        # predict using the optimized model and evaluate the prediction
         interpreter = tf.lite.Interpreter(model_content=tflite_model_opt)
         interpreter.allocate_tensors()
         input_index = interpreter.get_input_details()[0]["index"]
         output_index = interpreter.get_output_details()[0]["index"]
         input_scale, input_zero_point = interpreter.get_output_details()[0]["quantization"]
-        accuracy = 0
+        predictions = np.zeros((y_test.shape[0]))
         for i, sample in enumerate(X_test):
             interpreter.set_tensor(input_index, np.expand_dims(sample / input_scale + input_zero_point, 0).astype(np.int8))
             interpreter.invoke()
-            accuracy += np.argmax(y_test[i]) == np.argmax(interpreter.get_tensor(output_index)[0]) # rescaling is not needed
-        results_model["Optimized test accuracy"] = f"{accuracy / X_test.shape[0] * 100:.2f} \\%"
+            predictions[i] = np.argmax(interpreter.get_tensor(output_index)[0]) # rescaling is not needed
+        results_model["Optimized model accuracy"] = f"{(predictions == y_test).sum() / y_test.shape[0] * 100:.2f} \\%"
+        
+        # plot the confusuion matrix of the optimized model
+        confusion_matrix = tf.math.confusion_matrix(y_test, predictions).numpy()
+        confusion_matrix = skm.ConfusionMatrixDisplay(confusion_matrix=confusion_matrix, display_labels=LABELS)
+        axis[1].set_title(f"Optimized model")
+        confusion_matrix.plot(cmap="Blues", ax=axis[1])
+        plt.savefig(f"training/figures/{model_name}_confusion_matrix.png", dpi=300)
+        plt.close()
         del tflite_model_opt
 
-    with open("network/model_search_results.tex", "w") as results_file:
+    # export colected statistics to LaTex table
+    with open("training/results/statistics.tex", "w") as results_file:
         print = functools.partial(print, file=results_file)
         row_end = "\\\\"
         backslash_underscore = "\\_"
