@@ -64,6 +64,6 @@ void loop()
     Serial.println();
 
     while (!Serial.available())
-    ;
+        ;
     Serial.read();
 }

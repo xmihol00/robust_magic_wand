@@ -1,8 +1,6 @@
 
 #include <Arduino_LSM9DS1.h>
 #include <limits>
-#include <cstring>
-#include <cstdint>
 
 #include <TensorFlowLite.h>
 #include <tensorflow/lite/micro/all_ops_resolver.h>
@@ -14,12 +12,7 @@
 using namespace std;
 using namespace tflite;
 
-const float ACCELERATION_TRESHOLD = 1.5;
-
-const unsigned IMAGE_HEIGHT = 40;
-const unsigned IMAGE_WIDTH = 40;
-const unsigned IMAGE_INDEX = 39;
-const unsigned NUMNBER_OF_IMAGE_PIXELS = IMAGE_HEIGHT * IMAGE_WIDTH;
+const float ACCELERATION_TRESHOLD = 2.0;
 
 const unsigned SAMPLES_PER_SPELL = 119;
 const unsigned SAMPLES_DOUBLED = 119 << 1;
@@ -27,9 +20,12 @@ const unsigned SAMPLES_TRIPPELED = SAMPLES_PER_SPELL + SAMPLES_DOUBLED;
 const float DELTA_T = 1.0f / SAMPLES_PER_SPELL;
 
 const unsigned NUMBER_OF_LABELS = 5;
-const char* LABELS[NUMBER_OF_LABELS] = { "Oh no! 'Avada Kedavra' RIP :(.", "Every small kid here can move things with 'Locomotor' :).", 
-										 "Red light! 'Arresto Momentum' stop moving.", "You can't see it, 'Revelio', you can see it.", 
-										 "'Alohomora' is not meant for stealing, get out!" };
+const char* LABELS[NUMBER_OF_LABELS] = { "Avada Kedavra", "Locomotor", "Arresto Momentum", "Revelio", "Alohomora" };
+const char* LABELS_PADDED[NUMBER_OF_LABELS] = { "Avada Kedavra:    ", 
+												"Locomotor:        ", 
+												"Arresto Momentum: ", 
+												"Revelio:          ", 
+												"Alohomora:        " };
 
 float acceleration_average_x, acceleration_average_y;
 float angle_average_x, angle_average_y;
@@ -46,10 +42,6 @@ const Model *tf_model = nullptr;
 MicroInterpreter *interpreter = nullptr;
 TfLiteTensor *input_tensor = nullptr;
 TfLiteTensor *output_tensor = nullptr;
-float input_scale = 0.0f;
-float input_zero_point = 0.0f;
-float output_scale = 0.0f;
-float output_zero_point = 0.0f;
 
 const unsigned TENSOR_ARENA_SIZE = 128 * 1024;
 byte tensor_arena[TENSOR_ARENA_SIZE] __attribute__((aligned(16)));
@@ -139,18 +131,17 @@ void calculate_stroke()
 
 void load_stroke()
 {
-	float shift_x = 1.0f / (max_x - min_x) * IMAGE_INDEX;
-	float shift_y = 1.0f / (max_y - min_y) * IMAGE_INDEX;
-	float color = (255.0f - 2 * SAMPLES_PER_SPELL + 2.0f) / 255.0f / input_scale + input_zero_point;
-	float color_increase = 2.0f / 255.0f / input_scale;
+	float shift_x = 1.0f / (max_x - min_x);
+	float shift_y = 1.0f / (max_y - min_y);
 
 	for (unsigned i = 0; i < SAMPLES_DOUBLED; i += 2)
 	{
-		unsigned x = static_cast<unsigned>(roundf((stroke_points[i] - min_x) * shift_x));
-		unsigned y = static_cast<unsigned>(roundf((stroke_points[i + 1] - min_y) * shift_y));
+		input_tensor->data.f[i] = (stroke_points[i] - min_x) * shift_x;
+		input_tensor->data.f[i + 1] = (stroke_points[i + 1] - min_y) * shift_y;
 
-		input_tensor->data.int8[y * IMAGE_WIDTH + x] = static_cast<int8_t>(color);
-		color += color_increase;
+		Serial.print(input_tensor->data.f[i], 4);
+		Serial.print(" ");
+		Serial.println(input_tensor->data.f[i + 1], 4);
 	}
 }
 
@@ -180,36 +171,22 @@ void setup()
 	interpreter->AllocateTensors();
 	input_tensor = interpreter->input(0);
 	output_tensor = interpreter->output(0);
-
-	input_scale = input_tensor->params.scale;
-	input_zero_point = input_tensor->params.zero_point;
-	output_scale = output_tensor->params.scale;
-	output_zero_point = output_tensor->params.zero_point;
 }
 
 void loop()
 {
-	// reset the input tensor
-	memset(input_tensor->data.int8, input_zero_point, NUMNBER_OF_IMAGE_PIXELS * sizeof(int8_t));
-
-	Serial.println();
-	Serial.println("Get your magic wand ready.");
-	delay(2000);
-	Serial.println("Now is the time to show off, perform a spell.");
-
 	while (true)
 	{
 		if (IMU.accelerationAvailable())
 		{
 			float x, y, z;
 			IMU.readAcceleration(x, y, z);
-			if (fabs(y) + fabs(z) >= ACCELERATION_TRESHOLD)
+			if (fabs(y) + fabs(y) + fabs(z) >= ACCELERATION_TRESHOLD)
 			{
 				break;
 			}
 		}
 	}
-	Serial.println("Someone is performing magic here...");
 
 	for (unsigned i = 0; i < SAMPLES_TRIPPELED;)
 	{
@@ -222,7 +199,6 @@ void loop()
 			i += 3;
 		}
 	}
-	Serial.println("Let's see how good of a magician are you...");
 
 	average_acceleration();
 	calculate_angle();
@@ -237,11 +213,14 @@ void loop()
 			;
 	}
 
-	int8_t best_score = INT8_MIN;
+	float best_score = numeric_limits<float>::min();
 	unsigned best_label;
 	for (unsigned i = 0; i < NUMBER_OF_LABELS; i++)
 	{
-		int8_t score = output_tensor->data.int8[i];
+		float score = output_tensor->data.f[i];
+		Serial.print(LABELS_PADDED[i]);
+		Serial.print(score * 100.0f, 2);
+		Serial.println(" %");
 		if (score > best_score)
 		{
 			best_score = score;
@@ -249,7 +228,9 @@ void loop()
 		}
 	}
 
-	Serial.println();
 	Serial.println(LABELS[best_label]);
-	delay(1000);
+
+	while (!Serial.available())
+        ;
+    Serial.read();
 }

@@ -25,13 +25,13 @@ const char* LABELS[NUMBER_OF_LABELS] = { "Oh no! 'Avada Kedavra' RIP :(.", "Ever
 										 "'Alohomora' is not meant for stealing, get out!" };
 
 float acceleration_average_x, acceleration_average_y;
-float orientation_average_x, orientation_average_y;
+float angle_average_x, angle_average_y;
 float min_x, min_y, max_x, max_y;
 
 float acceleration_data[SAMPLES_TRIPPELED] = {};
 float gyroscope_data[SAMPLES_TRIPPELED] = {};
 float magnetometr_data[SAMPLES_TRIPPELED] = {};
-float orientation_data[SAMPLES_DOUBLED] = {};
+float angles[SAMPLES_DOUBLED] = {};
 float stroke_points[SAMPLES_DOUBLED] = {};
 
 AllOpsResolver ops_resolver;
@@ -58,28 +58,28 @@ void average_acceleration()
 	acceleration_average_y *= DELTA_T;
 }
 
-void calculate_orientation()
+void calculate_angle()
 {
-	orientation_average_x = 0.0f;
-	orientation_average_y = 0.0f;
+	angle_average_x = 0.0f;
+	angle_average_y = 0.0f;
 
-	float previous_orientation_x = 0.0f;
-	float previous_orientation_y = 0.0f;
+	float previous_angle_x = 0.0f;
+	float previous_angle_y = 0.0f;
 
 	for (unsigned i = 0, j = 0; j < SAMPLES_DOUBLED; i += 3, j += 2)
 	{
-		orientation_data[j] = previous_orientation_x + gyroscope_data[i + 1] * DELTA_T;
-		orientation_data[j + 1] = previous_orientation_y + gyroscope_data[i + 2] * DELTA_T;
+		angles[j] = previous_angle_x + gyroscope_data[i + 1] * DELTA_T;
+		angles[j + 1] = previous_angle_y + gyroscope_data[i + 2] * DELTA_T;
 
-		previous_orientation_x = orientation_data[j];
-		previous_orientation_y = orientation_data[j + 1];
+		previous_angle_x = angles[j];
+		previous_angle_y = angles[j + 1];
 
-		orientation_average_x += previous_orientation_x;
-		orientation_average_y += previous_orientation_y;
+		angle_average_x += previous_angle_x;
+		angle_average_y += previous_angle_y;
 	}
 
-	orientation_average_x *= DELTA_T;
-	orientation_average_y *= DELTA_T;
+	angle_average_x *= DELTA_T;
+	angle_average_y *= DELTA_T;
 }
 
 void calculate_stroke()
@@ -97,11 +97,11 @@ void calculate_stroke()
 
 	for (unsigned i = 0; i < SAMPLES_DOUBLED; i += 2)
 	{
-		float normalized_orientation_x = (orientation_data[i] - orientation_average_x);
-		float normalized_orientation_y = (orientation_data[i + 1] - orientation_average_y);
+		float normalized_angle_x = (angles[i] - angle_average_x);
+		float normalized_angle_y = (angles[i + 1] - angle_average_y);
 
-		float x = -normalized_acceleration_x * normalized_orientation_x - normalized_acceleration_y * normalized_orientation_y;
-		float y = normalized_acceleration_x * normalized_orientation_y - normalized_acceleration_y * normalized_orientation_x;
+		float x = -normalized_acceleration_x * normalized_angle_x - normalized_acceleration_y * normalized_angle_y;
+		float y = normalized_acceleration_x * normalized_angle_y - normalized_acceleration_y * normalized_angle_x;
 
 		stroke_points[i] = x;
 		stroke_points[i + 1] = y;
@@ -202,7 +202,7 @@ void loop()
 	Serial.println("Let's see how good of a magician are you...");
 
 	average_acceleration();
-	calculate_orientation();
+	calculate_angle();
 	calculate_stroke();
 	load_stroke();
 

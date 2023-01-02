@@ -266,7 +266,7 @@ if __name__ == "__main__":
         X_train, X_test, y_train, y_test = data_sets[data_set]
         results[model_name] = {}
         results_model = results[model_name]
-        results_model["Inference time"] = "----"
+        results_model["Inference time"] = "-----"
 
         # get weights for the given seed
         model.build(X_train.shape)
