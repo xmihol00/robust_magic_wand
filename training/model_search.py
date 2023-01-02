@@ -16,7 +16,7 @@ import functools
 
 import data_loaders
 
-SEED = 12211951
+SEED = 42
 IMAGE_HEIGHT = 40
 IMAGE_WIDTH = 40
 SAMPLES_PER_MEASUREMENT = 119
@@ -225,13 +225,13 @@ models = [
 
 model_names = [
     "baseline_linear",
-    "only_DENS_S", "only_DENS_M",
-    "CONV_DENS_S", "CONV_DENS_M", 
-    "only_CONV_S", "only_CONV_M",
-    "only_DENS_DO_S", "only_DENS_DO_M",
-    "CONV_DENS_DO_S", "CONV_DENS_DO_M",
-    "only_CONV_BN_S", "only_CONV_BN_M",
-    "CONV_DENS_BN_DO_S", "CONV_DENS_BN_DO_M",
+    "only_DENS_S", "only_DENS_L",
+    "CONV_DENS_S", "CONV_DENS_L", 
+    "only_CONV_S", "only_CONV_L",
+    "only_DENS_DO_S", "only_DENS_DO_L",
+    "CONV_DENS_DO_S", "CONV_DENS_DO_L",
+    "only_CONV_BN_S", "only_CONV_BN_L",
+    "CONV_DENS_BN_DO_S", "CONV_DENS_BN_DO_L",
 ]
 
 model_data_set = [
