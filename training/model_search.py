@@ -246,7 +246,7 @@ model_data_set = [
 ]
 
 table_header = ["Total parameters", "Trainable parameters", "Non-trainable parameters", "Size", "Optimized size", 
-                "Training time", "Epochs", "FLOPS", "Full model accuracy", "Optimized model accuracy"]
+                "Training time", "Epochs", "FLOPS", "Full model accuracy", "Optimized model accuracy", "Inference time"]
 
 if __name__ == "__main__":
     if not os.path.isfile("training/model_search.py"):
@@ -266,6 +266,7 @@ if __name__ == "__main__":
         X_train, X_test, y_train, y_test = data_sets[data_set]
         results[model_name] = {}
         results_model = results[model_name]
+        results_model["Inference time"] = "----"
 
         # get weights for the given seed
         model.build(X_train.shape)
@@ -283,12 +284,12 @@ if __name__ == "__main__":
         model.compile(optimizer="adam", loss="categorical_crossentropy", metrics=["accuracy"])
         train_start = time.time()
         model.fit(X_train, y_train, epochs=epochs, validation_split=0.0, batch_size=32, verbose=2)
-        results_model["Training time"] = f"{time.time() - train_start:.2f} s"
+        results_model["Training time"] = f"{(time.time() - train_start):.2f} s"
 
         # predict and evaluate the prediction
         predictions = model.predict(X_test, verbose=2)
         predictions = np.argmax(predictions, axis=1)
-        results_model["Full model accuracy"] = f"{(predictions == y_test).sum() / y_test.shape[0] * 100:.2f} \\%"
+        results_model["Full model accuracy"] = f"{((predictions == y_test).sum() / y_test.shape[0] * 100):.2f} \\%"
 
         # plot the full model confusion metrix
         figure, axis = plt.subplots(2, 1, figsize=(12, 18))
@@ -337,7 +338,7 @@ if __name__ == "__main__":
             interpreter.set_tensor(input_index, np.expand_dims(sample / input_scale + input_zero_point, 0).astype(np.int8))
             interpreter.invoke()
             predictions[i] = np.argmax(interpreter.get_tensor(output_index)[0]) # rescaling is not needed
-        results_model["Optimized model accuracy"] = f"{(predictions == y_test).sum() / y_test.shape[0] * 100:.2f} \\%"
+        results_model["Optimized model accuracy"] = f"{((predictions == y_test).sum() / y_test.shape[0] * 100):.2f} \\%"
         
         # plot the confusuion matrix of the optimized model
         confusion_matrix = tf.math.confusion_matrix(y_test, predictions).numpy()
@@ -371,3 +372,10 @@ if __name__ == "__main__":
 
         print("\\hline")
         print("\\end{tabular}", "\\end{table}", sep="\n")
+
+os.system("cat training/models/only_DENS_S.h > recognition/dense_recognition/model.h")
+os.system("cat training/models/only_DENS_S_opt.h > recognition/dense_recognition_opt/model.h")
+
+os.system("cat training/models/CONV_DENS_DO_L.h > recognition/image_recognition/model.h")
+os.system("cat training/models/CONV_DENS_DO_L_opt.h > recognition/image_recognition_opt/model.h")
+

@@ -3,18 +3,12 @@ import tensorflow.keras.utils as tfu
 import glob
 import sklearn.model_selection as skms
 import numpy as np
-import random
 
-SEED = 42
 IMAGE_HEIGHT = 40
 IMAGE_WIDTH = 40
 SAMPLES_PER_MEASUREMENT = 119
 LINES_PER_MEASUREMENT = SAMPLES_PER_MEASUREMENT + 1
 IMAGE_WIDTH_HEIGHT_INDEX = IMAGE_WIDTH - 1
-
-np.random.seed(SEED)
-random.seed(SEED)
-tf.random.set_seed(SEED)
 
 def get_stroke_samples(data):
     orientation_samples = np.zeros((SAMPLES_PER_MEASUREMENT, 3))
@@ -41,7 +35,7 @@ def get_stroke_samples(data):
         stroke_samples[:, 1] =  normalzied_acceleration[1] * normalized_orientation[:, 2] - normalzied_acceleration[2] * normalized_orientation[:, 1]
         yield stroke_samples
 
-def load_as_images(one_hot=True):
+def load_as_images(one_hot=True, seed=42):
     data = ""
     labels = []
     for i, file_name in enumerate(glob.glob("data/*.csv")):
@@ -63,14 +57,14 @@ def load_as_images(one_hot=True):
         image[pixels[:, 1], pixels[:, 0]] = colors
         images[i] = image.reshape(IMAGE_WIDTH, IMAGE_HEIGHT, 1).astype(np.float32)
 
-    X_train, X_test, y_train, y_test = skms.train_test_split(images, labels, test_size=0.2, random_state=SEED)
+    X_train, X_test, y_train, y_test = skms.train_test_split(images, labels, test_size=0.2, random_state=seed)
     if one_hot:
         # one-hot encoding of labels
         y_train = tfu.to_categorical(y_train, num_classes=5)
 
     return X_train, X_test, y_train, np.array(y_test)
 
-def load_as_array(one_hot=True):
+def load_as_array(one_hot=True, seed=42):
     data = ""
     labels = []
     for i, file_name in enumerate(glob.glob("data/*.csv")):
@@ -88,7 +82,7 @@ def load_as_array(one_hot=True):
         stroke_samples /= np.max(stroke_samples, axis=0) # normalize values from 0 to 1
         arrays[i] = stroke_samples.reshape(-1)
 
-    X_train, X_test, y_train, y_test = skms.train_test_split(arrays, labels, test_size=0.2, random_state=SEED)
+    X_train, X_test, y_train, y_test = skms.train_test_split(arrays, labels, test_size=0.2, random_state=seed)
     if one_hot:
         # one-hot encoding of labels
         y_train = tfu.to_categorical(y_train, num_classes=5)
