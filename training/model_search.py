@@ -225,12 +225,12 @@ models = [
 
 model_names = [
     "baseline_linear",
-    "only_DENS_S", "only_DENS_L",
+    "Only_DENS_S", "Only_DENS_L",
     "CONV_DENS_S", "CONV_DENS_L", 
-    "only_CONV_S", "only_CONV_L",
-    "only_DENS_DO_S", "only_DENS_DO_L",
+    "Only_CONV_S", "Only_CONV_L",
+    "Only_DENS_DO_S", "Only_DENS_DO_L",
     "CONV_DENS_DO_S", "CONV_DENS_DO_L",
-    "only_CONV_BN_S", "only_CONV_BN_L",
+    "Only_CONV_BN_S", "Only_CONV_BN_L",
     "CONV_DENS_BN_DO_S", "CONV_DENS_BN_DO_L",
 ]
 
@@ -371,10 +371,12 @@ if __name__ == "__main__":
             print(f"{results_model[table_header[-1]]} {row_end}")
 
         print("\\hline")
+        print("\\caption{Summary of analyzed models during model selection and hyperparametr tuning.}")
+        print("\\label{table1}")
         print("\\end{tabular}", "\\end{table}", sep="\n")
 
-os.system("cat training/models/only_DENS_S.h > recognition/dense_recognition/model.h")
-os.system("cat training/models/only_DENS_S_opt.h > recognition/dense_recognition_opt/model.h")
+os.system("cat training/models/Only_DENS_S.h > recognition/dense_recognition/model.h")
+os.system("cat training/models/Only_DENS_S_opt.h > recognition/dense_recognition_opt/model.h")
 
 os.system("cat training/models/CONV_DENS_DO_L.h > recognition/image_recognition/model.h")
 os.system("cat training/models/CONV_DENS_DO_L_opt.h > recognition/image_recognition_opt/model.h")

@@ -112,6 +112,6 @@ for i, file_name in enumerate(glob.glob("data/*.csv")):
         axis.set_frame_on(False)
         
         figure.set_size_inches(17, 13)
-        plt.subplots_adjust(left=0.05, bottom=0.08, right=0.97, top=0.91, wspace=0.25, hspace=0.5)
+        plt.subplots_adjust(left=0.05, bottom=0.08, right=0.97, top=0.95, wspace=0.25, hspace=0.5)
         plt.show()
 
