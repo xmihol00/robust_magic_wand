@@ -3,3 +3,4 @@ build/
 tmp.txt
 models/
 training/data/
+training/data_large/

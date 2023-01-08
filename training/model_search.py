@@ -68,7 +68,7 @@ models = [
         tfl.Conv2D(filters=32, kernel_size=(3, 3), activation=hidden_activation, padding="same"),
         tfl.MaxPool2D(),
         tfl.Flatten(),
-        tfl.Dense(units=64, activation=hidden_activation),
+        tfl.Dense(units=32, activation=hidden_activation),
         tfl.Dense(units=5, activation="softmax"),
     ]),
 
@@ -80,21 +80,8 @@ models = [
         tfl.Conv2D(filters=64, kernel_size=(3, 3), activation=hidden_activation, padding="same"),
         tfl.MaxPool2D(),
         tfl.Flatten(),
-        tfl.Dense(units=128, activation=hidden_activation),
+        tfl.Dense(units=64, activation=hidden_activation),
         tfl.Dense(units=5, activation="softmax"),
-    ]),
-
-    tfm.Sequential([
-        tfl.Conv2D(filters=8, kernel_size=(5, 5), activation=hidden_activation, padding="valid"),
-        tfl.MaxPool2D(),
-        tfl.Conv2D(filters=16, kernel_size=(3, 3), activation=hidden_activation, padding="valid"),
-        tfl.MaxPool2D(),
-        tfl.Conv2D(filters=32, kernel_size=(3, 3), activation=hidden_activation, padding="valid"),
-        tfl.MaxPool2D(),
-        tfl.Conv2D(filters=64, kernel_size=(3, 3), activation=hidden_activation, padding="valid"),
-        tfl.Conv2D(filters=32, kernel_size=(1, 1), activation=hidden_activation, padding="same"),
-        tfl.Conv2D(filters=5, kernel_size=(1, 1), activation="softmax", padding="same"),
-        tfl.Reshape([5])
     ]),
 
     tfm.Sequential([
@@ -103,9 +90,16 @@ models = [
         tfl.Conv2D(filters=32, kernel_size=(3, 3), activation=hidden_activation, padding="valid"),
         tfl.MaxPool2D(),
         tfl.Conv2D(filters=64, kernel_size=(3, 3), activation=hidden_activation, padding="valid"),
+        tfl.Conv2D(filters=5, kernel_size=(1, 1), activation="softmax", padding="same"),
+        tfl.Reshape([5])
+    ]),
+
+    tfm.Sequential([
+        tfl.Conv2D(filters=32, kernel_size=(5, 5), activation=hidden_activation, padding="valid"),
+        tfl.MaxPool2D(),
+        tfl.Conv2D(filters=64, kernel_size=(3, 3), activation=hidden_activation, padding="valid"),
         tfl.MaxPool2D(),
         tfl.Conv2D(filters=128, kernel_size=(3, 3), activation=hidden_activation, padding="valid"),
-        tfl.Conv2D(filters=64, kernel_size=(1, 1), activation=hidden_activation, padding="same"),
         tfl.Conv2D(filters=5, kernel_size=(1, 1), activation="softmax", padding="same"),
         tfl.Reshape([5])
     ]),
@@ -133,7 +127,7 @@ models = [
         tfl.MaxPool2D(),
         tfl.Flatten(),
         tfl.Dropout(droput_1),
-        tfl.Dense(units=64, activation=hidden_activation),
+        tfl.Dense(units=32, activation=hidden_activation),
         tfl.Dropout(droput_2),
         tfl.Dense(units=5, activation="softmax"),
     ]),
@@ -147,27 +141,9 @@ models = [
         tfl.MaxPool2D(),
         tfl.Flatten(),
         tfl.Dropout(droput_1),
-        tfl.Dense(units=128, activation=hidden_activation),
+        tfl.Dense(units=64, activation=hidden_activation),
         tfl.Dropout(droput_2),
         tfl.Dense(units=5, activation="softmax"),
-    ]),
-
-    tfm.Sequential([
-        tfl.Conv2D(filters=8, kernel_size=(5, 5), activation=hidden_activation, padding="valid"),
-        tfl.BatchNormalization(),
-        tfl.MaxPool2D(),
-        tfl.Conv2D(filters=16, kernel_size=(3, 3), activation=hidden_activation, padding="valid"),
-        tfl.BatchNormalization(),
-        tfl.MaxPool2D(),
-        tfl.Conv2D(filters=32, kernel_size=(3, 3), activation=hidden_activation, padding="valid"),
-        tfl.BatchNormalization(),
-        tfl.MaxPool2D(),
-        tfl.Conv2D(filters=64, kernel_size=(3, 3), activation=hidden_activation, padding="valid"),
-        tfl.BatchNormalization(),
-        tfl.Conv2D(filters=32, kernel_size=(1, 1), activation=hidden_activation, padding="same"),
-        tfl.BatchNormalization(),
-        tfl.Conv2D(filters=5, kernel_size=(1, 1), activation="softmax", padding="same"),
-        tfl.Reshape([5])
     ]),
 
     tfm.Sequential([
@@ -179,10 +155,18 @@ models = [
         tfl.MaxPool2D(),
         tfl.Conv2D(filters=64, kernel_size=(3, 3), activation=hidden_activation, padding="valid"),
         tfl.BatchNormalization(),
+        tfl.Conv2D(filters=5, kernel_size=(1, 1), activation="softmax", padding="same"),
+        tfl.Reshape([5])
+    ]),
+
+    tfm.Sequential([
+        tfl.Conv2D(filters=32, kernel_size=(5, 5), activation=hidden_activation, padding="valid"),
+        tfl.BatchNormalization(),
+        tfl.MaxPool2D(),
+        tfl.Conv2D(filters=64, kernel_size=(3, 3), activation=hidden_activation, padding="valid"),
+        tfl.BatchNormalization(),
         tfl.MaxPool2D(),
         tfl.Conv2D(filters=128, kernel_size=(3, 3), activation=hidden_activation, padding="valid"),
-        tfl.BatchNormalization(),
-        tfl.Conv2D(filters=64, kernel_size=(1, 1), activation=hidden_activation, padding="same"),
         tfl.BatchNormalization(),
         tfl.Conv2D(filters=5, kernel_size=(1, 1), activation="softmax", padding="same"),
         tfl.Reshape([5])
@@ -200,7 +184,7 @@ models = [
         tfl.MaxPool2D(),
         tfl.Flatten(),
         tfl.Dropout(droput_1),
-        tfl.Dense(units=64, activation=hidden_activation),
+        tfl.Dense(units=32, activation=hidden_activation),
         tfl.Dropout(droput_2),
         tfl.Dense(units=5, activation="softmax"),
     ]),
@@ -217,10 +201,10 @@ models = [
         tfl.MaxPool2D(),
         tfl.Flatten(),
         tfl.Dropout(droput_1),
-        tfl.Dense(units=128, activation=hidden_activation),
+        tfl.Dense(units=64, activation=hidden_activation),
         tfl.Dropout(droput_2),
         tfl.Dense(units=5, activation="softmax"),
-    ])
+    ]),
 ]
 
 model_names = [
@@ -234,7 +218,7 @@ model_names = [
     "CONV_DENS_BN_DO_S", "CONV_DENS_BN_DO_L",
 ]
 
-model_data_set = [
+model_data_sets = [
     0,
     0, 0,
     1, 1,
@@ -259,10 +243,10 @@ if __name__ == "__main__":
     os.makedirs("training/results", exist_ok=True)
 
     # load data sets
-    data_sets = [data_loaders.load_as_array(), data_loaders.load_as_images()]
+    data_sets = data_loaders.laod_as_arrays_and_images("data")
     results = {}
     
-    for model, model_name, data_set in zip(models, model_names, model_data_set):
+    for model, model_name, data_set in zip(models, model_names, model_data_sets):
         X_train, X_test, y_train, y_test = data_sets[data_set]
         results[model_name] = {}
         results_model = results[model_name]
