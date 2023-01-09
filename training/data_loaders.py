@@ -66,7 +66,7 @@ def load_as_images(directory, one_hot=True, seed=42):
 
     return X_train, X_test, y_train, np.array(y_test)
 
-def load_as_array(directory, one_hot=True, seed=42):
+def load_as_arrays(directory, one_hot=True, seed=42):
     data = ""
     labels = []
     for i, file_name in enumerate(sorted(glob.glob(f"{directory}/*.csv"))):
@@ -93,9 +93,49 @@ def load_as_array(directory, one_hot=True, seed=42):
     return X_train, X_test, y_train, np.array(y_test)
 
 
-def load_as_2D_arrays_cropped(one_hot=True, seed=42):
-    X_train, X_test, y_train, y_test = load_as_arrays_cropped(one_hot, seed)
+def load_as_2D_arrays(one_hot=True, seed=42):
+    X_train, X_test, y_train, y_test = load_as_arrays(one_hot, seed)
     return X_train.reshape(-1, 2, SAMPLES_PER_MEASUREMENT), X_test.reshape(-1, 2, SAMPLES_PER_MEASUREMENT), y_train, y_test
+
+def laod_as_arrays_and_images(directory, one_hot=True, seed=42):
+    data = ""
+    labels = []
+    for i, file_name in enumerate(sorted(glob.glob(f"{directory}/*.csv"))):
+        file = open(file_name, "r")
+        file.readline() # skip header
+        read_lines = file.read()
+        labels += [i] * (read_lines.count("\n") // LINES_PER_MEASUREMENT)
+        data += read_lines
+        file.close()
+
+    arrays = np.zeros((len(labels), 2 * SAMPLES_PER_MEASUREMENT), dtype=np.float32)
+    colors = np.linspace(255 - 2 * SAMPLES_PER_MEASUREMENT + 2, 255, SAMPLES_PER_MEASUREMENT) / 255
+    images = np.zeros((len(labels), IMAGE_HEIGHT, IMAGE_WIDTH, 1), dtype=np.float32)
+
+    for i, stroke_samples in enumerate(get_stroke_samples(data)): 
+        stroke_samples -= np.min(stroke_samples, axis=0) # make samples in range from 0 to x
+        stroke_samples /= np.max(stroke_samples, axis=0) # normalize values from 0 to 1
+        arrays[i] = stroke_samples.reshape(-1)
+        
+        # rasterize stroke
+        pixels = np.round(stroke_samples * IMAGE_WIDTH_HEIGHT_INDEX, 0).astype(np.uint8) # normalize samples to the whole image
+        image = np.zeros((IMAGE_WIDTH, IMAGE_HEIGHT))
+        image[pixels[:, 1], pixels[:, 0]] = colors
+        images[i] = image.reshape(IMAGE_WIDTH, IMAGE_HEIGHT, 1).astype(np.float32)
+
+
+    both_variants = [skms.train_test_split(arrays, labels, test_size=0.2, random_state=seed),
+                     skms.train_test_split(images, labels, test_size=0.2, random_state=seed)]
+
+    for i in range(len(both_variants)):
+        X_train, X_test, y_train, y_test = both_variants[i]
+        y_test = np.array(y_test)
+        if one_hot:
+            # one-hot encoding of labels
+            y_train = tfu.to_categorical(y_train, num_classes=5)
+        both_variants[i] = (X_train, X_test, y_train, y_test)
+       
+    return both_variants
 
 def load_as_images_cropped(directory, one_hot=True, seed=42):
     data = ""
@@ -156,47 +196,6 @@ def load_as_arrays_cropped(directory, one_hot=True, seed=42):
 def load_as_2D_arrays_cropped(one_hot=True, seed=42):
     X_train, X_test, y_train, y_test = load_as_arrays_cropped(one_hot, seed)
     return X_train.reshape(-1, 2, CROPPED_SAMPLES_PER_MEASUREMENT), X_test.reshape(-1, 2, CROPPED_SAMPLES_PER_MEASUREMENT), y_train, y_test
-
-def laod_as_arrays_and_images(directory, one_hot=True, seed=42):
-    data = ""
-    labels = []
-    for i, file_name in enumerate(sorted(glob.glob(f"{directory}/*.csv"))):
-        file = open(file_name, "r")
-        file.readline() # skip header
-        read_lines = file.read()
-        labels += [i] * (read_lines.count("\n") // LINES_PER_MEASUREMENT)
-        data += read_lines
-        file.close()
-
-    arrays = np.zeros((len(labels), 2 * CROPPED_SAMPLES_PER_MEASUREMENT), dtype=np.float32)
-    colors = np.linspace(255 - 2 * CROPPED_SAMPLES_PER_MEASUREMENT + 2, 255, CROPPED_SAMPLES_PER_MEASUREMENT) / 255
-    images = np.zeros((len(labels), IMAGE_HEIGHT, IMAGE_WIDTH, 1), dtype=np.float32)
-
-    for i, stroke_samples in enumerate(get_stroke_samples(data)): 
-        stroke_samples -= np.min(stroke_samples, axis=0) # make samples in range from 0 to x
-        stroke_samples /= np.max(stroke_samples, axis=0) # normalize values from 0 to 1
-        stroke_samples = stroke_samples[FRONT_CROP:-BACK_CROP, :]
-        arrays[i] = stroke_samples.reshape(-1)
-        
-        # rasterize stroke
-        pixels = np.round(stroke_samples * IMAGE_WIDTH_HEIGHT_INDEX, 0).astype(np.uint8) # normalize samples to the whole image
-        image = np.zeros((IMAGE_WIDTH, IMAGE_HEIGHT))
-        image[pixels[:, 1], pixels[:, 0]] = colors
-        images[i] = image.reshape(IMAGE_WIDTH, IMAGE_HEIGHT, 1).astype(np.float32)
-
-
-    both_variants = [skms.train_test_split(arrays, labels, test_size=0.2, random_state=seed),
-                     skms.train_test_split(images, labels, test_size=0.2, random_state=seed)]
-
-    for i in range(len(both_variants)):
-        X_train, X_test, y_train, y_test = both_variants[i]
-        y_test = np.array(y_test)
-        if one_hot:
-            # one-hot encoding of labels
-            y_train = tfu.to_categorical(y_train, num_classes=5)
-        both_variants[i] = (X_train, X_test, y_train, y_test)
-       
-    return both_variants
 
 def laod_as_arrays_and_images_cropped(directory, one_hot=True, seed=42):
     data = ""

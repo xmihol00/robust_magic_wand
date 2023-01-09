@@ -11,6 +11,32 @@
 
 #include "model.h"
 
+#define FULL_LENGHT_INPUT 0
+
+#define CROPPED_INPUT 1
+
+#define DEBUG_OUTPUT 0
+
+#define REGULAR_OUTPUT 1
+
+#define PERCENTAGE_OUTPUT 1
+
+#define INFERENCE_TIME_OUTPUT 1
+
+#define FUNNY_OUTPUT 1
+
+#if REGULAR_OUTPUT
+	#define FUNNY_OUTPUT 0
+#else
+	#define FUNNY_OUTPUT 1
+#endif
+
+#if CROPPED_INPUT
+	#define FULL_LENGHT_INPUT 0
+#else
+	#define FULL_LENGHT_INPUT 1
+#endif
+
 using namespace std;
 using namespace tflite;
 
@@ -30,9 +56,22 @@ const unsigned FRONT_CROP_SAMPLES = 10;
 const float DELTA_T = 1.0f / SAMPLES_PER_SPELL;
 
 const unsigned NUMBER_OF_LABELS = 5;
-const char* LABELS[NUMBER_OF_LABELS] = { "Oh no! 'Avada Kedavra' RIP :(.", "Every small kid here can move things with 'Locomotor' :).", 
-										 "Red light! 'Arresto Momentum' stop moving.", "You can't see it, 'Revelio', you can see it.", 
-										 "'Alohomora' is not meant for stealing, get out!" };
+
+#if REGULAR_OUTPUT
+const char* LABELS[NUMBER_OF_LABELS] = { "Alohomora", "Arresto Momentum", "Avada Kedavra", "Locomotor", "Revelio" };
+#endif
+
+#if FUNNY_OUTPUT
+const char* LABELS[NUMBER_OF_LABELS] = { "'Alohomora' is not meant for stealing, get out!", "Red light! 'Arresto Momentum' stop moving.", 
+										 "Oh no! 'Avada Kedavra' RIP :(.", "Every small kid here can move things with 'Locomotor' :).", 
+										 "You can't see it, 'Revelio', you can see it.",  };
+#endif
+
+const char* LABELS_PADDED[NUMBER_OF_LABELS] = { "Alohomora:        ", 
+												"Arresto Momentum: " 
+												"Avada Kedavra:    ", 
+												"Locomotor:        ", 
+												"Revelio:          ", };
 
 float acceleration_average_x, acceleration_average_y;
 float angle_average_x, angle_average_y;
@@ -51,8 +90,6 @@ TfLiteTensor *input_tensor = nullptr;
 TfLiteTensor *output_tensor = nullptr;
 float input_scale = 0.0f;
 float input_zero_point = 0.0f;
-float output_scale = 0.0f;
-float output_zero_point = 0.0f;
 
 const unsigned TENSOR_ARENA_SIZE = 128 * 1024;
 byte tensor_arena[TENSOR_ARENA_SIZE] __attribute__((aligned(16)));
@@ -147,6 +184,18 @@ void load_stroke()
 	float color = (255.0f - 2 * SAMPLES_PER_SPELL + 2.0f) / 255.0f / input_scale + input_zero_point;
 	float color_increase = 2.0f / 255.0f / input_scale;
 
+#if FULL_LENGHT_INPUT
+	for (unsigned i = 0; i < SAMPLES_DOUBLED; i += 2)
+	{
+		unsigned x = static_cast<unsigned>(roundf((stroke_points[i] - min_x) * shift_x));
+		unsigned y = static_cast<unsigned>(roundf((stroke_points[i + 1] - min_y) * shift_y));
+
+		input_tensor->data.int8[y * IMAGE_WIDTH + x] = static_cast<int8_t>(color);
+		color += color_increase;
+	}
+#endif
+
+#if CROPPED_INPUT
 	for (unsigned i = FRONT_CROP_SAMPLES; i < CROPPED_SAMPLES_DOUBLED; i += 2)
 	{
 		unsigned x = static_cast<unsigned>(roundf((stroke_points[i] - min_x) * shift_x));
@@ -155,7 +204,9 @@ void load_stroke()
 		input_tensor->data.int8[y * IMAGE_WIDTH + x] = static_cast<int8_t>(color);
 		color += color_increase;
 	}
+#endif
 }
+
 
 void setup()
 {
@@ -186,8 +237,6 @@ void setup()
 
 	input_scale = input_tensor->params.scale;
 	input_zero_point = input_tensor->params.zero_point;
-	output_scale = output_tensor->params.scale;
-	output_zero_point = output_tensor->params.zero_point;
 }
 
 void loop()

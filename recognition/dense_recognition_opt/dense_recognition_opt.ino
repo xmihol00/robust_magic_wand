@@ -10,6 +10,32 @@
 
 #include "model.h"
 
+#define FULL_LENGHT_INPUT 0
+
+#define CROPPED_INPUT 1
+
+#define DEBUG_OUTPUT 0
+
+#define REGULAR_OUTPUT 1
+
+#define PERCENTAGE_OUTPUT 1
+
+#define INFERENCE_TIME_OUTPUT 1
+
+#define FUNNY_OUTPUT 1
+
+#if REGULAR_OUTPUT
+	#define FUNNY_OUTPUT 0
+#else
+	#define FUNNY_OUTPUT 1
+#endif
+
+#if CROPPED_INPUT
+	#define FULL_LENGHT_INPUT 0
+#else
+	#define FULL_LENGHT_INPUT 1
+#endif
+
 using namespace std;
 using namespace tflite;
 
@@ -24,14 +50,22 @@ const unsigned FRONT_CROP_SAMPLES = 10;
 const float DELTA_T = 1.0f / SAMPLES_PER_SPELL;
 
 const unsigned NUMBER_OF_LABELS = 5;
-const char* LABELS[NUMBER_OF_LABELS] = { "Oh no! 'Avada Kedavra' RIP :(.", "Every small kid here can move things with 'Locomotor' :).", 
-										 "Red light! 'Arresto Momentum' stop moving.", "You can't see it, 'Revelio', you can see it.", 
-										 "'Alohomora' is not meant for stealing, get out!" };
-const char* LABELS_PADDED[NUMBER_OF_LABELS] = { "Avada Kedavra:    ", 
+
+#if REGULAR_OUTPUT
+const char* LABELS[NUMBER_OF_LABELS] = { "Alohomora", "Arresto Momentum", "Avada Kedavra", "Locomotor", "Revelio" };
+#endif
+
+#if FUNNY_OUTPUT
+const char* LABELS[NUMBER_OF_LABELS] = { "'Alohomora' is not meant for stealing, get out!", "Red light! 'Arresto Momentum' stop moving.", 
+										 "Oh no! 'Avada Kedavra' RIP :(.", "Every small kid here can move things with 'Locomotor' :).", 
+										 "You can't see it, 'Revelio', you can see it.",  };
+#endif
+
+const char* LABELS_PADDED[NUMBER_OF_LABELS] = { "Alohomora:        ", 
+												"Arresto Momentum: " 
+												"Avada Kedavra:    ", 
 												"Locomotor:        ", 
-												"Arresto Momentum: ", 
-												"Revelio:          ", 
-												"Alohomora:        " };
+												"Revelio:          ", };
 
 float acceleration_average_x, acceleration_average_y;
 float angle_average_x, angle_average_y;
@@ -142,11 +176,21 @@ void load_stroke()
 	float shift_x = 1.0f / (max_x - min_x);
 	float shift_y = 1.0f / (max_y - min_y);
 		
+#if FULL_LENGHT_INPUT
+	for (unsigned i = 0; i < SAMPLES_DOUBLED; i += 2)
+	{
+		input_tensor->data.int8[i] = static_cast<int8_t>((stroke_points[i] - min_x) * shift_x * inverse_input_scale + input_zero_point);
+		input_tensor->data.int8[i + 1] = static_cast<unsigned>((stroke_points[i + 1] - min_y) * shift_y * inverse_input_scale + input_zero_point);
+	}
+#endif
+		
+#if CROPPED_INPUT
 	for (unsigned i = FRONT_CROP_SAMPLES; i < CROPPED_SAMPLES_DOUBLED; i += 2)
 	{
 		input_tensor->data.int8[i - FRONT_CROP_SAMPLES] = static_cast<int8_t>((stroke_points[i] - min_x) * shift_x * inverse_input_scale + input_zero_point);
 		input_tensor->data.int8[i - FRONT_CROP_SAMPLES + 1] = static_cast<unsigned>((stroke_points[i + 1] - min_y) * shift_y * inverse_input_scale + input_zero_point);
 	}
+#endif
 }
 
 void setup()
@@ -182,10 +226,18 @@ void setup()
 
 void loop()
 {
+#if REGULAR_OUTPUT
+	Serial.println();
+	Serial.println("Prepare, waiting 3 s.");
+	delay(3000);
+	Serial.println("Cast a spell.");
+#endif
+#if FUNNY_OUTPUT
 	Serial.println();
 	Serial.println("Get your magic wand ready.");
-	delay(2000);
-	Serial.println("Now is the time to show off, perform a spell.");
+	delay(3000);
+	Serial.println("Now is the time to perform a spell.");
+#endif
 
 	while (true)
 	{
@@ -199,7 +251,13 @@ void loop()
 			}
 		}
 	}
+
+#if REGULAR_OUTPUT
+	Serial.println("Capturing a spell...");
+#endif
+#if FUNNY_OUTPUT
 	Serial.println("Someone is performing magic here...");
+#endif
 
 	for (unsigned i = 0; i < SAMPLES_TRIPPELED;)
 	{
@@ -212,7 +270,14 @@ void loop()
 			i += 3;
 		}
 	}
+
+#if FUNNY_OUTPUT
 	Serial.println("Let's see how good of a magician are you...");
+#endif
+
+#if INFERENCE_TIME_OUTPUT
+	unsigned long inference_start = micros();
+#endif
 
 	average_acceleration();
 	calculate_angle();
@@ -227,11 +292,27 @@ void loop()
 			;
 	}
 
+#if INFERENCE_TIME_OUTPUT
+	unsigned long inference_end = micros();
+	unsigned long inference_time = inference_end - inference_start;
+	Serial.print("Inference time: ");
+	Serial.print(inference_time * 0.001f, 3);
+	Serial.println(" ms");
+#endif
+
 	int8_t best_score = INT8_MIN;
 	unsigned best_label;
 	for (unsigned i = 0; i < NUMBER_OF_LABELS; i++)
 	{
 		int8_t score = output_tensor->data.int8[i];
+
+#if PERCENTAGE_OUTPUT
+		Serial.print(LABELS_PADDED[i]);
+		Serial.print(": ");
+		Serial.print(score * 100.0f, 2);
+		Serial.println(" %");
+#endif
+
 		if (score > best_score)
 		{
 			best_score = score;
