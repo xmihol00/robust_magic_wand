@@ -37,10 +37,10 @@ def get_stroke_samples(data):
         stroke_samples[:, 1] =  normalzied_acceleration[1] * normalized_angle[:, 2] - normalzied_acceleration[2] * normalized_angle[:, 1]
         yield stroke_samples
 
-def load_as_images(one_hot=True, seed=42):
+def load_as_images(directory, one_hot=True, seed=42):
     data = ""
     labels = []
-    for i, file_name in enumerate(glob.glob("data/*.csv")):
+    for i, file_name in enumerate(sorted(glob.glob(f"{directory}/*.csv"))):
         file = open(file_name, "r")
         file.readline() # skip header
         read_lines = file.read()
@@ -66,10 +66,10 @@ def load_as_images(one_hot=True, seed=42):
 
     return X_train, X_test, y_train, np.array(y_test)
 
-def load_as_array(one_hot=True, seed=42):
+def load_as_array(directory, one_hot=True, seed=42):
     data = ""
     labels = []
-    for i, file_name in enumerate(glob.glob("data/*.csv")):
+    for i, file_name in enumerate(sorted(glob.glob(f"{directory}/*.csv"))):
         print(file_name)
         file = open(file_name, "r")
         file.readline() # skip header
@@ -100,7 +100,7 @@ def load_as_2D_arrays_cropped(one_hot=True, seed=42):
 def load_as_images_cropped(directory, one_hot=True, seed=42):
     data = ""
     labels = []
-    for i, file_name in enumerate(glob.glob(f"{directory}/*.csv")):
+    for i, file_name in enumerate(sorted(glob.glob(f"{directory}/*.csv"))):
         file = open(file_name, "r")
         file.readline() # skip header
         read_lines = file.read()
@@ -130,7 +130,7 @@ def load_as_images_cropped(directory, one_hot=True, seed=42):
 def load_as_arrays_cropped(directory, one_hot=True, seed=42):
     data = ""
     labels = []
-    for i, file_name in enumerate(glob.glob(f"{directory}/*.csv")):
+    for i, file_name in enumerate(sorted(glob.glob(f"{directory}/*.csv"))):
         file = open(file_name, "r")
         file.readline() # skip header
         read_lines = file.read()
@@ -160,7 +160,7 @@ def load_as_2D_arrays_cropped(one_hot=True, seed=42):
 def laod_as_arrays_and_images(directory, one_hot=True, seed=42):
     data = ""
     labels = []
-    for i, file_name in enumerate(glob.glob(f"{directory}/*.csv")):
+    for i, file_name in enumerate(sorted(glob.glob(f"{directory}/*.csv"))):
         file = open(file_name, "r")
         file.readline() # skip header
         read_lines = file.read()
@@ -201,7 +201,7 @@ def laod_as_arrays_and_images(directory, one_hot=True, seed=42):
 def laod_as_arrays_and_images_cropped(directory, one_hot=True, seed=42):
     data = ""
     labels = []
-    for i, file_name in enumerate(glob.glob(f"{directory}/*.csv")):
+    for i, file_name in enumerate(sorted(glob.glob(f"{directory}/*.csv"))):
         file = open(file_name, "r")
         file.readline() # skip header
         read_lines = file.read()
@@ -239,4 +239,4 @@ def laod_as_arrays_and_images_cropped(directory, one_hot=True, seed=42):
        
     return both_variants
 
-load_as_array()
+load_as_array("data")

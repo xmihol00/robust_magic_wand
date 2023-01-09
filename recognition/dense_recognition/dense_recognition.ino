@@ -18,7 +18,7 @@ using namespace tflite;
 
 #define DEBUG_OUTPUT 0
 
-#define REGULAR_OUTPUT 0
+#define REGULAR_OUTPUT 1
 
 #define PERCENTAGE_OUTPUT 1
 
@@ -51,20 +51,20 @@ const float DELTA_T = 1.0f / SAMPLES_PER_SPELL;
 const unsigned NUMBER_OF_LABELS = 5;
 
 #if REGULAR_OUTPUT
-const char* LABELS[NUMBER_OF_LABELS] = { "Avada Kedavra", "Alohomora", "Locomotor", "Revelio", "Arresto Momentum" };
+const char* LABELS[NUMBER_OF_LABELS] = { "Alohomora", "Arresto Momentum", "Avada Kedavra", "Locomotor", "Revelio" };
 #endif
 
 #if FUNNY_OUTPUT
-const char* LABELS[NUMBER_OF_LABELS] = { "Oh no! 'Avada Kedavra' RIP :(.", "'Alohomora' is not meant for stealing, get out!", 
-										 "Every small kid here can move things with 'Locomotor' :).", 
-										 "You can't see it, 'Revelio', you can see it.", "Red light! 'Arresto Momentum' stop moving." };
+const char* LABELS[NUMBER_OF_LABELS] = { "'Alohomora' is not meant for stealing, get out!", "Red light! 'Arresto Momentum' stop moving.", 
+										 "Oh no! 'Avada Kedavra' RIP :(.", "Every small kid here can move things with 'Locomotor' :).", 
+										 "You can't see it, 'Revelio', you can see it.",  };
 #endif
 
-const char* LABELS_PADDED[NUMBER_OF_LABELS] = { "Avada Kedavra:    ", 
-												"Alohomora:        ", 
+const char* LABELS_PADDED[NUMBER_OF_LABELS] = { "Alohomora:        ", 
+												"Arresto Momentum: " 
+												"Avada Kedavra:    ", 
 												"Locomotor:        ", 
-												"Revelio:          ", 
-												"Arresto Momentum: " };
+												"Revelio:          ", };
 
 float acceleration_average_x, acceleration_average_y;
 float angle_average_x, angle_average_y;
