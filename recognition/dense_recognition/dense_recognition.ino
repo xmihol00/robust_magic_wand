@@ -13,17 +13,17 @@
 using namespace std;
 using namespace tflite;
 
-#define OPTIMIZED 1					// set to 1, when optimized model is loaded in model.h
+#define OPTIMIZED 0					// set to 1, when optimized model is loaded in model.h
 
-#define CROPPED_INPUT 1				// set to 1, when model in model.h expects input of copped lenght (110 samples instead of 119)
+#define CROPPED_INPUT 0				// set to 1, when model in model.h expects input of copped lenght (110 samples instead of 119)
 
-#define REGULAR_OUTPUT 1			// set to 1 for basic output of the program
+#define REGULAR_OUTPUT 0			// set to 1 for basic output of the program
 
-#define PERCENTAGE_OUTPUT 1			// set to 1 to enhance output with percentages of each class
+#define PERCENTAGE_OUTPUT 0			// set to 1 to enhance output with percentages of each class
 
-#define INFERENCE_TIME_OUTPUT 1		// set to 1 to see the time it takes from having samples measured until prediction
+#define INFERENCE_TIME_OUTPUT 0		// set to 1 to see the time it takes from having samples measured until prediction
 
-#define FUNNY_OUTPUT 1				// set to 1 for funny output of the program
+#define FUNNY_OUTPUT 0				// set to 1 for funny output of the program
 
 #define PRETTY_OUTPUT 0				// set to 1 to print info necessary to create output of the program as in the video, use the pretty_serial_echo.py to display it
 
@@ -34,12 +34,12 @@ const unsigned SAMPLES_DOUBLED = SAMPLES_PER_SPELL << 1;
 const unsigned SAMPLES_TRIPPELED = SAMPLES_PER_SPELL + SAMPLES_DOUBLED;
 const unsigned CROPPED_SAMPLES_PER_SPELL = 110;
 const unsigned CROPPED_SAMPLES_DOUBLED = CROPPED_SAMPLES_PER_SPELL << 1;
-const unsigned FRONT_CROP_SAMPLES = 10;
+const unsigned FRONT_CROP_SAMPLES = 4;
 const float DELTA_T = 1.0f / SAMPLES_PER_SPELL;
 
 const unsigned NUMBER_OF_LABELS = 5;
 
-#if REGULAR_OUTPUT
+#if REGULAR_OUTPUT & !(FUNNY_OUTPUT)
 const char* LABELS[NUMBER_OF_LABELS] = { "Alohomora", "Arresto Momentum", "Avada Kedavra", "Locomotor", "Revelio" };
 #endif
 

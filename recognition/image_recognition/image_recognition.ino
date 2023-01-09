@@ -39,12 +39,12 @@ const unsigned SAMPLES_DOUBLED = SAMPLES_PER_SPELL << 1;
 const unsigned SAMPLES_TRIPPELED = SAMPLES_PER_SPELL + SAMPLES_DOUBLED;
 const unsigned CROPPED_SAMPLES_PER_SPELL = 110;
 const unsigned CROPPED_SAMPLES_DOUBLED = CROPPED_SAMPLES_PER_SPELL << 1;
-const unsigned FRONT_CROP_SAMPLES = 10;
+const unsigned FRONT_CROP_SAMPLES = 4;
 const float DELTA_T = 1.0f / SAMPLES_PER_SPELL;
 
 const unsigned NUMBER_OF_LABELS = 5;
 
-#if REGULAR_OUTPUT
+#if REGULAR_OUTPUT & !(FUNNY_OUTPUT)
 const char* LABELS[NUMBER_OF_LABELS] = { "Alohomora", "Arresto Momentum", "Avada Kedavra", "Locomotor", "Revelio" };
 #endif
 
