@@ -10,33 +10,19 @@
 
 #include "model.h"
 
-#define OPTIMIZED 1
+#define OPTIMIZED 1					// set to 1, when optimized model is loaded in model.h
 
-#define FULL_LENGHT_INPUT 0
+#define CROPPED_INPUT 1				// set to 1, when model in model.h expects input of copped lenght (110 samples instead of 119)
 
-#define CROPPED_INPUT 1
+#define REGULAR_OUTPUT 1			// set to 1 for basic output of the program
 
-#define DEBUG_OUTPUT 0
+#define PERCENTAGE_OUTPUT 1			// set to 1 to enhance output with percentages of each class
 
-#define REGULAR_OUTPUT 1
+#define INFERENCE_TIME_OUTPUT 1		// set to 1 to see the time it takes from having samples measured until prediction
 
-#define PERCENTAGE_OUTPUT 1
+#define FUNNY_OUTPUT 1				// set to 1 for funny output of the program
 
-#define INFERENCE_TIME_OUTPUT 1
-
-#define FUNNY_OUTPUT 1
-
-#if REGULAR_OUTPUT
-	#define FUNNY_OUTPUT 0
-#else
-	#define FUNNY_OUTPUT 1
-#endif
-
-#if CROPPED_INPUT
-	#define FULL_LENGHT_INPUT 0
-#else
-	#define FULL_LENGHT_INPUT 1
-#endif
+#define PRETTY_OUTPUT 0				// set to 1 to print info necessary to create output of the program as in the video, use the pretty_serial_echo.py to display it
 
 using namespace std;
 using namespace tflite;
@@ -92,6 +78,11 @@ TfLiteTensor *output_tensor = nullptr;
 #if OPTIMIZED
 float inverse_input_scale = 0.0f;
 float input_zero_point = 0.0f;
+
+	#if PERCENTAGE_OUTPUT
+	float output_scale = 0.0f;
+	float output_zero_point = 0.0f;
+	#endif
 #endif
 
 const unsigned TENSOR_ARENA_SIZE = 128 * 1024;
@@ -184,12 +175,13 @@ void load_stroke()
 {
 	float shift_x = 1.0f / (max_x - min_x) * IMAGE_INDEX;
 	float shift_y = 1.0f / (max_y - min_y) * IMAGE_INDEX;
-	float color = (255.0f - SAMPLES_PER_SPELL + 1.0f) / 255.0f;
-	float color_increase = 1.0f / 255.0f;
 
 #if OPTIMIZED
-	#if FULL_LENGHT_INPUT
-		for (unsigned i = 0; i < SAMPLES_DOUBLED; i += 2)
+	#if CROPPED_INPUT
+		float color = (255.0f - 2 * CROPPED_SAMPLES_DOUBLED + 2.0f) / 255.0f * inverse_input_scale + input_zero_point;
+		float color_increase = 2.0f / 255.0f * inverse_input_scale;
+
+		for (unsigned i = FRONT_CROP_SAMPLES; i < CROPPED_SAMPLES_DOUBLED; i += 2)
 		{
 			unsigned x = static_cast<unsigned>(roundf((stroke_points[i] - min_x) * shift_x));
 			unsigned y = static_cast<unsigned>(roundf((stroke_points[i + 1] - min_y) * shift_y));
@@ -197,10 +189,11 @@ void load_stroke()
 			input_tensor->data.int8[y * IMAGE_WIDTH + x] = static_cast<int8_t>(color);
 			color += color_increase;
 		}
-	#endif
+	#else
+		float color = (255.0f - 2 * SAMPLES_DOUBLED + 2.0f) / 255.0f * inverse_input_scale + input_zero_point;
+		float color_increase = 2.0f / 255.0f * inverse_input_scale;
 
-	#if CROPPED_INPUT
-		for (unsigned i = FRONT_CROP_SAMPLES; i < CROPPED_SAMPLES_DOUBLED; i += 2)
+		for (unsigned i = 0; i < SAMPLES_DOUBLED; i += 2)
 		{
 			unsigned x = static_cast<unsigned>(roundf((stroke_points[i] - min_x) * shift_x));
 			unsigned y = static_cast<unsigned>(roundf((stroke_points[i + 1] - min_y) * shift_y));
@@ -210,7 +203,22 @@ void load_stroke()
 		}
 	#endif
 #else
-	#if FULL_LENGHT_INPUT
+	#if CROPPED_INPUT
+		float color = (255.0f - CROPPED_SAMPLES_DOUBLED + 2.0f) / 255.0f;
+		float color_increase = 2.0f / 255.0f;
+
+		for (unsigned i = FRONT_CROP_SAMPLES; i < CROPPED_SAMPLES_DOUBLED; i += 2)
+		{
+			unsigned x = static_cast<unsigned>(roundf((stroke_points[i] - min_x) * shift_x));
+			unsigned y = static_cast<unsigned>(roundf((stroke_points[i + 1] - min_y) * shift_y));
+
+			input_tensor->data.f[y * IMAGE_WIDTH + x] = color;
+			color += color_increase;
+		}
+	#else
+		float color = (255.0f - SAMPLES_DOUBLED + 2.0f) / 255.0f;
+		float color_increase = 2.0f / 255.0f;
+
 		for (unsigned i = 0; i < SAMPLES_DOUBLED; i += 2)
 		{
 			unsigned x = static_cast<unsigned>(roundf((stroke_points[i] - min_x) * shift_x));
@@ -220,17 +228,15 @@ void load_stroke()
 			color += color_increase;
 		}
 	#endif
+#endif
 
-	#if CROPPED_INPUT
-		for (unsigned i = FRONT_CROP_SAMPLES; i < CROPPED_SAMPLES_DOUBLED; i += 2)
-		{
-			unsigned x = static_cast<unsigned>(roundf((stroke_points[i] - min_x) * shift_x));
-			unsigned y = static_cast<unsigned>(roundf((stroke_points[i + 1] - min_y) * shift_y));
-
-			input_tensor->data.f[y * IMAGE_WIDTH + x] = color;
-			color += color_increase;
-		}
-	#endif
+#if PRETTY_OUTPUT
+	for (unsigned i = 0; i < SAMPLES_DOUBLED; i += 2)
+	{
+		Serial.print((stroke_points[i] - min_x) * shift_x, 4);
+		Serial.print(" ");
+		Serial.println((stroke_points[i + 1] - min_y) * shift_y, 4);
+	}
 #endif
 }
 
@@ -264,6 +270,11 @@ void setup()
 #if OPTIMIZED
 	inverse_input_scale = 1 / input_tensor->params.scale;
 	input_zero_point = input_tensor->params.zero_point;
+
+	#if PERCENTAGE_OUTPUT
+	output_scale = output_tensor->params.scale;
+	output_zero_point = output_tensor->params.zero_point;
+	#endif
 #endif
 }
 
@@ -271,10 +282,20 @@ void loop()
 {
 	memset(input_tensor->data.f, 0, NUMNBER_OF_IMAGE_PIXELS * sizeof(float));
 
+#if REGULAR_OUTPUT & !(PRETTY_OUTPUT) & !(FUNNY_OUTPUT)
+	Serial.println();
+	Serial.println();
+	Serial.println("Prepare, waiting 3 s.");
+	delay(3000);
+	Serial.println("Cast a spell.");
+#endif
+#if FUNNY_OUTPUT & !(PRETTY_OUTPUT)
+	Serial.println();
 	Serial.println();
 	Serial.println("Get your magic wand ready.");
-	delay(2000);
+	delay(3000);
 	Serial.println("Now is the time to perform a spell.");
+#endif
 
 	while (true)
 	{
@@ -288,7 +309,13 @@ void loop()
 			}
 		}
 	}
+
+#if REGULAR_OUTPUT & !(PRETTY_OUTPUT) & !(FUNNY_OUTPUT)
+	Serial.println("Capturing a spell...");
+#endif
+#if FUNNY_OUTPUT & !(PRETTY_OUTPUT)
 	Serial.println("Someone is performing magic here...");
+#endif
 
 	for (unsigned i = 0; i < SAMPLES_TRIPPELED;)
 	{
@@ -301,7 +328,14 @@ void loop()
 			i += 3;
 		}
 	}
+	
+#if FUNNY_OUTPUT & !(PRETTY_OUTPUT)
 	Serial.println("Let's see how good of a magician are you...");
+#endif
+
+#if INFERENCE_TIME_OUTPUT
+	unsigned long inference_start = micros();
+#endif
 
 	average_acceleration();
 	calculate_angle();
@@ -315,6 +349,14 @@ void loop()
 		while (true)
 			;
 	}
+
+#if INFERENCE_TIME_OUTPUT
+	unsigned long inference_end = micros();
+	unsigned long inference_time = inference_end - inference_start;
+	Serial.print("Inference time: ");
+	Serial.print(inference_time * 0.001f, 3);
+	Serial.println(" ms");
+#endif
 
 #if OPTIMIZED
 	int8_t best_score = INT8_MIN;
@@ -331,10 +373,14 @@ void loop()
 		float score = output_tensor->data.f[i];
 #endif
 
-#if PERCENTAGE_OUTPUT & !(OPTIMIZED)
+#if PERCENTAGE_OUTPUT
 		Serial.print(LABELS_PADDED[i]);
 		Serial.print(": ");
+	#if OPTIMIZED
+		Serial.print((score - output_zero_point) * output_scale * 100.0f, 2);
+	#else
 		Serial.print(score * 100.0f, 2);
+	#endif
 		Serial.println(" %");
 #endif
 
@@ -345,6 +391,13 @@ void loop()
 		}
 	}
 
-	Serial.println();
+#if REGULAR_OUTPUT | PRETTY_OUTPUT | FUNNY_OUTPUT
 	Serial.println(LABELS[best_label]);
+#endif
+
+#if PRETTY_OUTPUT
+	while (!Serial.available())
+	        ;
+	    Serial.read();
+#endif
 }
