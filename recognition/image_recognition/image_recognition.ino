@@ -15,14 +15,17 @@ using namespace tflite;
 
 const float ACCELERATION_TRESHOLD = 1.5;
 
-const unsigned IMAGE_HEIGHT = 40;
-const unsigned IMAGE_WIDTH = 40;
-const unsigned IMAGE_INDEX = 39;
+const unsigned IMAGE_HEIGHT = 20;
+const unsigned IMAGE_WIDTH = 20;
+const unsigned IMAGE_INDEX = IMAGE_HEIGHT - 1;
 const unsigned NUMNBER_OF_IMAGE_PIXELS = IMAGE_HEIGHT * IMAGE_WIDTH;
 
 const unsigned SAMPLES_PER_SPELL = 119;
-const unsigned SAMPLES_DOUBLED = 119 << 1;
+const unsigned SAMPLES_DOUBLED = SAMPLES_PER_SPELL << 1;
 const unsigned SAMPLES_TRIPPELED = SAMPLES_PER_SPELL + SAMPLES_DOUBLED;
+const unsigned CROPPED_SAMPLES_PER_SPELL = 110;
+const unsigned CROPPED_SAMPLES_DOUBLED = CROPPED_SAMPLES_PER_SPELL << 1;
+const unsigned FRONT_CROP_SAMPLES = 10;
 const float DELTA_T = 1.0f / SAMPLES_PER_SPELL;
 
 const unsigned NUMBER_OF_LABELS = 5;
@@ -101,7 +104,7 @@ void calculate_stroke()
 	const float normalized_acceleration_x = acceleration_average_x / acceleration_magnitude;
 	const float normalized_acceleration_y = acceleration_average_y / acceleration_magnitude;
 
-	for (unsigned i = 0; i < SAMPLES_DOUBLED; i += 2)
+	for (unsigned i = FRONT_CROP_SAMPLES; i < CROPPED_SAMPLES_DOUBLED; i += 2)
 	{
 		float normalized_angle_x = (angles[i] - angle_average_x);
 		float normalized_angle_y = (angles[i + 1] - angle_average_y);
@@ -192,7 +195,7 @@ void loop()
 		{
 			float x, y, z;
 			IMU.readAcceleration(x, y, z);
-			if (fabs(y) + fabs(z) >= ACCELERATION_TRESHOLD)
+			if (fabs(x) + fabs(y) + fabs(z) >= ACCELERATION_TRESHOLD)
 			{
 				break;
 			}

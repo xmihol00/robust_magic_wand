@@ -4,7 +4,7 @@ import data_loaders
 IMAGE_HEIGHT = 40
 IMAGE_WIDTH = 40
 
-X_train, X_test, y_train, y_test = data_loaders.load_as_images(one_hot=False)
+X_train, X_test, y_train, y_test = data_loaders.load_as_images_cropped(one_hot=False)
 
 spells = ["Avada Kedavra", "Locomotor", "Arresto Momentum", "Revelio", "Alohomora"]
 

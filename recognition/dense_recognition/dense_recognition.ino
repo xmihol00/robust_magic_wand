@@ -12,17 +12,59 @@
 using namespace std;
 using namespace tflite;
 
-const float ACCELERATION_TRESHOLD = 1.5;
+#define FULL_LENGHT_INPUT 0
+
+#define CROPPED_INPUT 1
+
+#define DEBUG_OUTPUT 0
+
+#define REGULAR_OUTPUT 0
+
+#define PERCENTAGE_OUTPUT 1
+
+#define INFERENCE_TIME_OUTPUT 1
+
+#define FUNNY_OUTPUT 1
+
+#if REGULAR_OUTPUT
+	#define FUNNY_OUTPUT 0
+#else
+	#define FUNNY_OUTPUT 1
+#endif
+
+#if CROPPED_INPUT
+	#define FULL_LENGHT_INPUT 0
+#else
+	#define FULL_LENGHT_INPUT 1
+#endif
+
+const float ACCELERATION_TRESHOLD = 2;
 
 const unsigned SAMPLES_PER_SPELL = 119;
-const unsigned SAMPLES_DOUBLED = 119 << 1;
+const unsigned SAMPLES_DOUBLED = SAMPLES_PER_SPELL << 1;
 const unsigned SAMPLES_TRIPPELED = SAMPLES_PER_SPELL + SAMPLES_DOUBLED;
+const unsigned CROPPED_SAMPLES_PER_SPELL = 110;
+const unsigned CROPPED_SAMPLES_DOUBLED = CROPPED_SAMPLES_PER_SPELL << 1;
+const unsigned FRONT_CROP_SAMPLES = 10;
 const float DELTA_T = 1.0f / SAMPLES_PER_SPELL;
 
 const unsigned NUMBER_OF_LABELS = 5;
-const char* LABELS[NUMBER_OF_LABELS] = { "Oh no! 'Avada Kedavra' RIP :(.", "Every small kid here can move things with 'Locomotor' :).", 
-										 "Red light! 'Arresto Momentum' stop moving.", "You can't see it, 'Revelio', you can see it.", 
-										 "'Alohomora' is not meant for stealing, get out!" };
+
+#if REGULAR_OUTPUT
+const char* LABELS[NUMBER_OF_LABELS] = { "Avada Kedavra", "Alohomora", "Locomotor", "Revelio", "Arresto Momentum" };
+#endif
+
+#if FUNNY_OUTPUT
+const char* LABELS[NUMBER_OF_LABELS] = { "Oh no! 'Avada Kedavra' RIP :(.", "'Alohomora' is not meant for stealing, get out!", 
+										 "Every small kid here can move things with 'Locomotor' :).", 
+										 "You can't see it, 'Revelio', you can see it.", "Red light! 'Arresto Momentum' stop moving." };
+#endif
+
+const char* LABELS_PADDED[NUMBER_OF_LABELS] = { "Avada Kedavra:    ", 
+												"Alohomora:        ", 
+												"Locomotor:        ", 
+												"Revelio:          ", 
+												"Arresto Momentum: " };
 
 float acceleration_average_x, acceleration_average_y;
 float angle_average_x, angle_average_y;
@@ -126,6 +168,7 @@ void calculate_stroke()
 	}
 }
 
+#if FULL_LENGHT_INPUT
 void load_stroke()
 {
 	float shift_x = 1.0f / (max_x - min_x);
@@ -137,6 +180,21 @@ void load_stroke()
 		input_tensor->data.f[i + 1] = (stroke_points[i + 1] - min_y) * shift_y;
 	}
 }
+#endif
+
+#if CROPPED_INPUT
+void load_stroke()
+{
+	float shift_x = 1.0f / (max_x - min_x);
+	float shift_y = 1.0f / (max_y - min_y);
+
+	for (unsigned i = FRONT_CROP_SAMPLES; i < CROPPED_SAMPLES_DOUBLED; i += 2)
+	{
+		input_tensor->data.f[i - FRONT_CROP_SAMPLES] = (stroke_points[i] - min_x) * shift_x;
+		input_tensor->data.f[i - FRONT_CROP_SAMPLES + 1] = (stroke_points[i + 1] - min_y) * shift_y;
+	}
+}
+#endif
 
 void setup()
 {
@@ -171,7 +229,7 @@ void loop()
 	
 	Serial.println();
 	Serial.println("Get your magic wand ready.");
-	delay(2000);
+	delay(3000);
 	Serial.println("Now is the time to perform a spell.");
 
 	while (true)
@@ -180,7 +238,7 @@ void loop()
 		{
 			float x, y, z;
 			IMU.readAcceleration(x, y, z);
-			if (fabs(y) + fabs(z) >= ACCELERATION_TRESHOLD)
+			if (fabs(x) + fabs(y) + fabs(z) >= ACCELERATION_TRESHOLD)
 			{
 				break;
 			}
@@ -201,6 +259,10 @@ void loop()
 	}
 	Serial.println("Let's see how good of a magician are you...");
 
+#if INFERENCE_TIME_OUTPUT
+	unsigned long inference_start = micros();
+#endif
+
 	average_acceleration();
 	calculate_angle();
 	calculate_stroke();
@@ -214,12 +276,20 @@ void loop()
 			;
 	}
 
+#if INFERENCE_TIME_OUTPUT
+	unsigned long inference_end = micros();
+	unsigned long inference_time = inference_end - inference_start;
+	Serial.print("Inference time: ");
+	Serial.print(inference_time * 0.001f, 3);
+	Serial.println(" ms");
+#endif
+
 	float best_score = numeric_limits<float>::min();
 	unsigned best_label;
 	for (unsigned i = 0; i < NUMBER_OF_LABELS; i++)
 	{
 		float score = output_tensor->data.f[i];
-		Serial.print(LABELS[i]);
+		Serial.print(LABELS_PADDED[i]);
 		Serial.print(": ");
 		Serial.print(score * 100.0f, 2);
 		Serial.println(" %");

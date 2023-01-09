@@ -16,14 +16,17 @@ using namespace tflite;
 
 const float ACCELERATION_TRESHOLD = 1.5;
 
-const unsigned IMAGE_HEIGHT = 40;
-const unsigned IMAGE_WIDTH = 40;
-const unsigned IMAGE_INDEX = 39;
+const unsigned IMAGE_HEIGHT = 20;
+const unsigned IMAGE_WIDTH = 20;
+const unsigned IMAGE_INDEX = IMAGE_HEIGHT - 1;
 const unsigned NUMNBER_OF_IMAGE_PIXELS = IMAGE_HEIGHT * IMAGE_WIDTH;
 
 const unsigned SAMPLES_PER_SPELL = 119;
-const unsigned SAMPLES_DOUBLED = 119 << 1;
+const unsigned SAMPLES_DOUBLED = SAMPLES_PER_SPELL << 1;
 const unsigned SAMPLES_TRIPPELED = SAMPLES_PER_SPELL + SAMPLES_DOUBLED;
+const unsigned CROPPED_SAMPLES_PER_SPELL = 110;
+const unsigned CROPPED_SAMPLES_DOUBLED = CROPPED_SAMPLES_PER_SPELL << 1;
+const unsigned FRONT_CROP_SAMPLES = 10;
 const float DELTA_T = 1.0f / SAMPLES_PER_SPELL;
 
 const unsigned NUMBER_OF_LABELS = 5;
@@ -144,7 +147,7 @@ void load_stroke()
 	float color = (255.0f - 2 * SAMPLES_PER_SPELL + 2.0f) / 255.0f / input_scale + input_zero_point;
 	float color_increase = 2.0f / 255.0f / input_scale;
 
-	for (unsigned i = 0; i < SAMPLES_DOUBLED; i += 2)
+	for (unsigned i = FRONT_CROP_SAMPLES; i < CROPPED_SAMPLES_DOUBLED; i += 2)
 	{
 		unsigned x = static_cast<unsigned>(roundf((stroke_points[i] - min_x) * shift_x));
 		unsigned y = static_cast<unsigned>(roundf((stroke_points[i + 1] - min_y) * shift_y));
@@ -203,7 +206,7 @@ void loop()
 		{
 			float x, y, z;
 			IMU.readAcceleration(x, y, z);
-			if (fabs(y) + fabs(z) >= ACCELERATION_TRESHOLD)
+			if (fabs(x) + fabs(y) + fabs(z) >= ACCELERATION_TRESHOLD)
 			{
 				break;
 			}

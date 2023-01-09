@@ -145,7 +145,7 @@ void loop()
         {
             float x, y, z;
             IMU.readAcceleration(x, y, z);
-            if (fabs(y) + fabs(z) >= ACCELERATION_TRESHOLD)
+            if (fabs(x) + fabs(y) + fabs(z) >= ACCELERATION_TRESHOLD)
             {
                 break;
             }

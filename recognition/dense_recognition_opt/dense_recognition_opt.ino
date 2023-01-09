@@ -13,17 +13,25 @@
 using namespace std;
 using namespace tflite;
 
-const float ACCELERATION_TRESHOLD = 1.5;
+const float ACCELERATION_TRESHOLD = 2;
 
 const unsigned SAMPLES_PER_SPELL = 119;
-const unsigned SAMPLES_DOUBLED = 119 << 1;
+const unsigned SAMPLES_DOUBLED = SAMPLES_PER_SPELL << 1;
 const unsigned SAMPLES_TRIPPELED = SAMPLES_PER_SPELL + SAMPLES_DOUBLED;
+const unsigned CROPPED_SAMPLES_PER_SPELL = 110;
+const unsigned CROPPED_SAMPLES_DOUBLED = CROPPED_SAMPLES_PER_SPELL << 1;
+const unsigned FRONT_CROP_SAMPLES = 10;
 const float DELTA_T = 1.0f / SAMPLES_PER_SPELL;
 
 const unsigned NUMBER_OF_LABELS = 5;
 const char* LABELS[NUMBER_OF_LABELS] = { "Oh no! 'Avada Kedavra' RIP :(.", "Every small kid here can move things with 'Locomotor' :).", 
 										 "Red light! 'Arresto Momentum' stop moving.", "You can't see it, 'Revelio', you can see it.", 
 										 "'Alohomora' is not meant for stealing, get out!" };
+const char* LABELS_PADDED[NUMBER_OF_LABELS] = { "Avada Kedavra:    ", 
+												"Locomotor:        ", 
+												"Arresto Momentum: ", 
+												"Revelio:          ", 
+												"Alohomora:        " };
 
 float acceleration_average_x, acceleration_average_y;
 float angle_average_x, angle_average_y;
@@ -134,10 +142,10 @@ void load_stroke()
 	float shift_x = 1.0f / (max_x - min_x);
 	float shift_y = 1.0f / (max_y - min_y);
 		
-	for (unsigned i = 0; i < SAMPLES_DOUBLED; i += 2)
+	for (unsigned i = FRONT_CROP_SAMPLES; i < CROPPED_SAMPLES_DOUBLED; i += 2)
 	{
-		input_tensor->data.int8[i] = static_cast<int8_t>((stroke_points[i] - min_x) * shift_x * inverse_input_scale + input_zero_point);
-		input_tensor->data.int8[i + 1] = static_cast<unsigned>((stroke_points[i + 1] - min_y) * shift_y * inverse_input_scale + input_zero_point);
+		input_tensor->data.int8[i - FRONT_CROP_SAMPLES] = static_cast<int8_t>((stroke_points[i] - min_x) * shift_x * inverse_input_scale + input_zero_point);
+		input_tensor->data.int8[i - FRONT_CROP_SAMPLES + 1] = static_cast<unsigned>((stroke_points[i + 1] - min_y) * shift_y * inverse_input_scale + input_zero_point);
 	}
 }
 
@@ -185,7 +193,7 @@ void loop()
 		{
 			float x, y, z;
 			IMU.readAcceleration(x, y, z);
-			if (fabs(y) + fabs(z) >= ACCELERATION_TRESHOLD)
+			if (fabs(x) + fabs(y) + fabs(z) >= ACCELERATION_TRESHOLD)
 			{
 				break;
 			}

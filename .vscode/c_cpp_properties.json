@@ -25,7 +25,7 @@
             ],
             "cStandard": "c11",
             "cppStandard": "c++17",
-            "compileCommands": "${workspaceFolder}/recognition/build/compile_commands.json",
+            "compileCommands": "${workspaceFolder}/recognition/*/build/compile_commands.json",
             "forcedInclude": [
                 "/home/david/.arduino15/packages/arduino/hardware/avr/1.8.6/cores/arduino/Arduino.h"
             ]

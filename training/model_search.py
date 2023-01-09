@@ -243,7 +243,7 @@ if __name__ == "__main__":
     os.makedirs("training/results", exist_ok=True)
 
     # load data sets
-    data_sets = data_loaders.laod_as_arrays_and_images("data")
+    data_sets = data_loaders.laod_as_arrays_and_images_cropped("data")
     results = {}
     
     for model, model_name, data_set in zip(models, model_names, model_data_sets):
@@ -359,8 +359,8 @@ if __name__ == "__main__":
         print("\\label{table1}")
         print("\\end{tabular}", "\\end{table}", sep="\n")
 
-os.system("cat training/models/Only_DENS_S.h > recognition/dense_recognition/model.h")
-os.system("cat training/models/Only_DENS_S_opt.h > recognition/dense_recognition_opt/model.h")
+os.system("cat training/models/Only_DENS_L.h > recognition/dense_recognition/model.h")
+os.system("cat training/models/Only_DENS_L_opt.h > recognition/dense_recognition_opt/model.h")
 
 os.system("cat training/models/CONV_DENS_DO_L.h > recognition/image_recognition/model.h")
 os.system("cat training/models/CONV_DENS_DO_L_opt.h > recognition/image_recognition_opt/model.h")

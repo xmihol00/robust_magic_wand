@@ -3,23 +3,25 @@
 \center
 \begin{tabular}{ |c|c|c|c|c|c|c|c|c|c| }
 \hline
-& \thead{Total\\parameters} & \thead{Trainable\\parameters} & \thead{Non-trainable\\parameters} & \thead{Size} & \thead{Optimized\\size} & \thead{Training\\time\\GPU} & \thead{Epochs} & \thead{FLOPS} & \thead{Full\\model\\accuracy} & \thead{Optimized\\model\\accuracy} & \thead{Inference\\time} \\
+& \thead{Total\\parameters} & \thead{Trainable\\parameters} & \thead{Non-trainable\\parameters} & \thead{Size} & \thead{Optimized\\size} & \thead{Training\\time} & \thead{Epochs} & \thead{FLOPS} & \thead{Full\\model\\accuracy} & \thead{Optimized\\model\\accuracy} & \thead{Inference\\time} \\
 \hline
-\thead{baseline\_linear} & 1105 & 1105 & 0 & 5740 & 2640 & 0.57 s & 12 & 2230 & 86.00 \% & 85.00 \% & ----- \\
-\thead{Only\_DENS\_S} & 22605 & 22605 & 0 & 92320 & 25168 & 0.39 s & 6 & 45130 & 89.00 \% & 87.00 \% & ----- \\
-\thead{Only\_DENS\_L} & 37455 & 37455 & 0 & 152284 & 41024 & 0.49 s & 9 & 74730 & 94.00 \% & 94.00 \% & ----- \\
-\thead{CONV\_DENS\_S} & 10181 & 10181 & 0 & 45564 & 17472 & 2.47 s & 12 & 537886 & 95.00 \% & 95.00 \% & ----- \\
-\thead{CONV\_DENS\_L} & 40069 & 40069 & 0 & 165116 & 48968 & 1.52 s & 12 & 2013726 & 100.00 \% & 100.00 \% & ----- \\
-\thead{Only\_CONV\_S} & 23877 & 23877 & 0 & 100432 & 32584 & 1.69 s & 7 & 584670 & 94.00 \% & 94.00 \% & ----- \\
-\thead{Only\_CONV\_L} & 93829 & 93829 & 0 & 380240 & 105560 & 1.03 s & 7 & 1906590 & 95.00 \% & 97.00 \% & ----- \\
-\thead{Only\_DENS\_DO\_S} & 22605 & 22605 & 0 & 92320 & 25168 & 0.49 s & 10 & 45130 & 91.00 \% & 91.00 \% & ----- \\
-\thead{Only\_DENS\_DO\_L} & 37455 & 37455 & 0 & 152284 & 41024 & 0.64 s & 7 & 74730 & 92.00 \% & 91.00 \% & ----- \\
-\thead{CONV\_DENS\_DO\_S} & 10181 & 10181 & 0 & 45564 & 17472 & 1.29 s & 12 & 537886 & 98.00 \% & 98.00 \% & ----- \\
-\thead{CONV\_DENS\_DO\_L} & 40069 & 40069 & 0 & 165116 & 48968 & 1.10 s & 7 & 2013726 & 99.00 \% & 97.00 \% & ----- \\
-\thead{Only\_CONV\_BN\_S} & 24325 & 24101 & 224 & 103224 & 35136 & 0.66 s & 1 & 595966 & 60.00 \% & 57.00 \% & ----- \\
-\thead{Only\_CONV\_BN\_L} & 94725 & 94277 & 448 & 383928 & 108336 & 1.24 s & 1 & 1929182 & 62.00 \% & 64.00 \% & ----- \\
-\thead{CONV\_DENS\_BN\_DO\_S} & 10405 & 10293 & 112 & 47912 & 19920 & 1.17 s & 3 & 549422 & 57.00 \% & 56.00 \% & ----- \\
-\thead{CONV\_DENS\_BN\_DO\_L} & 40517 & 40293 & 224 & 167912 & 51528 & 0.69 s & 1 & 2036798 & 51.00 \% & 46.00 \% & ----- \\
+\thead{baseline\_linear} & 1105 & 1105 & 0 & 5700 & 2592 & 0.40 s & 12 & 2230 & 86.00 \% & 85.00 \% & ----- \\
+\thead{Only\_DENS\_S} & 22605 & 22605 & 0 & 92284 & 25120 & 0.34 s & 6 & 45130 & 89.00 \% & 87.00 \% & ----- \\
+\thead{Only\_DENS\_L} & 37455 & 37455 & 0 & 152232 & 40952 & 0.53 s & 9 & 74730 & 94.00 \% & 94.00 \% & ----- \\
+\thead{CONV\_DENS\_S} & 10181 & 10181 & 0 & 45472 & 17344 & 1.27 s & 12 & 537886 & 95.00 \% & 95.00 \% & ----- \\
+\thead{CONV\_DENS\_L} & 40069 & 40069 & 0 & 165048 & 48864 & 1.33 s & 12 & 2013726 & 100.00 \% & 100.00 \% & ----- \\
+\thead{Only\_CONV\_S} & 23877 & 23877 & 0 & 100368 & 32512 & 1.27 s & 7 & 584670 & 94.00 \% & 94.00 \% & ----- \\
+\thead{Only\_CONV\_L} & 93829 & 93829 & 0 & 380224 & 105528 & 0.89 s & 7 & 1906590 & 95.00 \% & 97.00 \% & ----- \\
+\thead{Only\_DENS\_DO\_S} & 22605 & 22605 & 0 & 92308 & 25144 & 0.41 s & 10 & 45130 & 91.00 \% & 91.00 \% & ----- \\
+\thead{Only\_DENS\_DO\_L} & 37455 & 37455 & 0 & 152264 & 40984 & 0.46 s & 7 & 74730 & 92.00 \% & 91.00 \% & ----- \\
+\thead{CONV\_DENS\_DO\_S} & 10181 & 10181 & 0 & 45540 & 17424 & 1.66 s & 12 & 537886 & 98.00 \% & 98.00 \% & ----- \\
+\thead{CONV\_DENS\_DO\_L} & 40069 & 40069 & 0 & 165116 & 48968 & 1.05 s & 7 & 2013726 & 99.00 \% & 97.00 \% & ----- \\
+\thead{Only\_CONV\_BN\_S} & 24325 & 24101 & 224 & 103208 & 35120 & 0.68 s & 1 & 595966 & 60.00 \% & 57.00 \% & ----- \\
+\thead{Only\_CONV\_BN\_L} & 94725 & 94277 & 448 & 383928 & 108336 & 0.60 s & 1 & 1929182 & 62.00 \% & 64.00 \% & ----- \\
+\thead{CONV\_DENS\_BN\_DO\_S} & 10405 & 10293 & 112 & 47908 & 19920 & 0.82 s & 3 & 549422 & 57.00 \% & 56.00 \% & ----- \\
+\thead{CONV\_DENS\_BN\_DO\_L} & 40517 & 40293 & 224 & 167908 & 51528 & 0.65 s & 1 & 2036798 & 51.00 \% & 46.00 \% & ----- \\
 \hline
+\caption{Summary of analyzed models during model selection and hyperparametr tuning.}
+\label{table1}
 \end{tabular}
 \end{table}

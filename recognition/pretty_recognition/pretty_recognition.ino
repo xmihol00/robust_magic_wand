@@ -15,7 +15,7 @@ using namespace tflite;
 const float ACCELERATION_TRESHOLD = 2.0;
 
 const unsigned SAMPLES_PER_SPELL = 119;
-const unsigned SAMPLES_DOUBLED = 119 << 1;
+const unsigned SAMPLES_DOUBLED = SAMPLES_PER_SPELL << 1;
 const unsigned SAMPLES_TRIPPELED = SAMPLES_PER_SPELL + SAMPLES_DOUBLED;
 const float DELTA_T = 1.0f / SAMPLES_PER_SPELL;
 
@@ -181,7 +181,7 @@ void loop()
 		{
 			float x, y, z;
 			IMU.readAcceleration(x, y, z);
-			if (fabs(y) + fabs(y) + fabs(z) >= ACCELERATION_TRESHOLD)
+			if (fabs(x) + fabs(y) + fabs(z) >= ACCELERATION_TRESHOLD)
 			{
 				break;
 			}
