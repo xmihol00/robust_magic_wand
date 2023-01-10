@@ -2,5 +2,9 @@ __pycache__/
 build/
 tmp.txt
 models/
-training/data/
-training/data_large/
+
+model_search/data/
+model_search/data_large/
+
+final/data/
+final/data_large/

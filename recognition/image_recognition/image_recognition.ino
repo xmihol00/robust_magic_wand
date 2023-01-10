@@ -12,9 +12,9 @@
 
 #define OPTIMIZED 1					// set to 1, when optimized model is loaded in model.h
 
-#define CROPPED_INPUT 1				// set to 1, when model in model.h expects input of copped lenght (110 samples instead of 119)
+#define CROPPED_INPUT 0				// set to 1, when model in model.h expects input of copped lenght (110 samples instead of 119)
 
-#define REGULAR_OUTPUT 1			// set to 1 for basic output of the program
+#define REGULAR_OUTPUT 0			// set to 1 for basic output of the program
 
 #define PERCENTAGE_OUTPUT 1			// set to 1 to enhance output with percentages of each class
 
@@ -28,6 +28,7 @@ using namespace std;
 using namespace tflite;
 
 const float ACCELERATION_TRESHOLD = 1.5;
+const unsigned PREPARATION_DELAY_MS = 2500;
 
 const unsigned IMAGE_HEIGHT = 20;
 const unsigned IMAGE_WIDTH = 20;
@@ -55,7 +56,7 @@ const char* LABELS[NUMBER_OF_LABELS] = { "'Alohomora' is not meant for stealing,
 #endif
 
 const char* LABELS_PADDED[NUMBER_OF_LABELS] = { "Alohomora:        ", 
-												"Arresto Momentum: " 
+												"Arresto Momentum: ", 
 												"Avada Kedavra:    ", 
 												"Locomotor:        ", 
 												"Revelio:          ", };
@@ -283,17 +284,9 @@ void loop()
 	memset(input_tensor->data.f, 0, NUMNBER_OF_IMAGE_PIXELS * sizeof(float));
 
 #if REGULAR_OUTPUT & !(PRETTY_OUTPUT) & !(FUNNY_OUTPUT)
-	Serial.println();
-	Serial.println();
-	Serial.println("Prepare, waiting 3 s.");
-	delay(3000);
 	Serial.println("Cast a spell.");
 #endif
 #if FUNNY_OUTPUT & !(PRETTY_OUTPUT)
-	Serial.println();
-	Serial.println();
-	Serial.println("Get your magic wand ready.");
-	delay(3000);
 	Serial.println("Now is the time to perform a spell.");
 #endif
 
@@ -375,7 +368,6 @@ void loop()
 
 #if PERCENTAGE_OUTPUT
 		Serial.print(LABELS_PADDED[i]);
-		Serial.print(": ");
 	#if OPTIMIZED
 		Serial.print((score - output_zero_point) * output_scale * 100.0f, 2);
 	#else
@@ -393,6 +385,11 @@ void loop()
 
 #if REGULAR_OUTPUT | PRETTY_OUTPUT | FUNNY_OUTPUT
 	Serial.println(LABELS[best_label]);
+#endif
+
+#if REGULAR_OUTPUT | FUNNY_OUTPUT
+	delay(PREPARATION_DELAY_MS);
+	Serial.println();
 #endif
 
 #if PRETTY_OUTPUT
