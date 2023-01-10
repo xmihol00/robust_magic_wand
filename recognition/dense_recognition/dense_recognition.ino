@@ -13,9 +13,9 @@
 using namespace std;
 using namespace tflite;
 
-#define OPTIMIZED 0					// set to 1, when optimized model is loaded in model.h
+#define OPTIMIZED 1					// set to 1, when optimized model is loaded in model.h
 
-#define CROPPED_INPUT 1				// set to 1, when model in model.h expects input of copped lenght (110 samples instead of 119)
+#define CROPPED_INPUT 0				// set to 1, when model in model.h expects input of copped lenght (110 samples instead of 119)
 
 #define REGULAR_OUTPUT 1			// set to 1 for basic output of the program
 
@@ -25,10 +25,10 @@ using namespace tflite;
 
 #define FUNNY_OUTPUT 0				// set to 1 for funny output of the program
 
-#define PRETTY_OUTPUT 0				// set to 1 to print info necessary to create output of the program as in the video, use the pretty_serial_echo.py to display it
+#define PRETTY_OUTPUT 1				// set to 1 to print info necessary to create output of the program as in the video, use the pretty_serial_echo.py to display it
 
 const float ACCELERATION_TRESHOLD = 2;
-const unsigned PREPARATION_DELAY_MS = 2500;
+const unsigned PREPARATION_DELAY_MS = 0;
 
 const unsigned SAMPLES_PER_SPELL = 119;
 const unsigned SAMPLES_DOUBLED = SAMPLES_PER_SPELL << 1;
@@ -40,11 +40,11 @@ const float DELTA_T = 1.0f / SAMPLES_PER_SPELL;
 
 const unsigned NUMBER_OF_LABELS = 5;
 
-#if REGULAR_OUTPUT & !(FUNNY_OUTPUT)
+#if (REGULAR_OUTPUT & !(FUNNY_OUTPUT)) | PRETTY_OUTPUT 
 const char* LABELS[NUMBER_OF_LABELS] = { "Alohomora", "Arresto Momentum", "Avada Kedavra", "Locomotor", "Revelio" };
 #endif
 
-#if FUNNY_OUTPUT
+#if FUNNY_OUTPUT & !(PRETTY_OUTPUT)
 const char* LABELS[NUMBER_OF_LABELS] = { "'Alohomora' is not meant for stealing, get out!", "Red light! 'Arresto Momentum' stop moving.", 
 										 "Oh no! 'Avada Kedavra' RIP :(.", "Every small kid here can move things with 'Locomotor' :).", 
 										 "You can't see it, 'Revelio', you can see it.",  };
@@ -76,7 +76,7 @@ TfLiteTensor *output_tensor = nullptr;
 float inverse_input_scale = 0.0f;
 float input_zero_point = 0.0f;
 
-	#if PERCENTAGE_OUTPUT
+	#if PERCENTAGE_OUTPUT | PRETTY_OUTPUT
 	float output_scale = 0.0f;
 	float output_zero_point = 0.0f;
 	#endif
@@ -203,7 +203,7 @@ void load_stroke()
 	#endif
 #endif
 
-#if PRETTY_PRINT
+#if PRETTY_OUTPUT
 	for (unsigned i = 0; i < SAMPLES_DOUBLED; i += 2)
 	{
 		Serial.print((stroke_points[i] - min_x) * shift_x, 4);
@@ -292,11 +292,11 @@ void loop()
 		}
 	}
 
-#if FUNNY_OUTPUT
+#if FUNNY_OUTPUT & !(PRETTY_OUTPUT)
 	Serial.println("Let's see how good of a magician are you...");
 #endif
 
-#if INFERENCE_TIME_OUTPUT
+#if INFERENCE_TIME_OUTPUT & !(PRETTY_OUTPUT)
 	unsigned long inference_start = micros();
 #endif
 
@@ -313,7 +313,7 @@ void loop()
 			;
 	}
 
-#if INFERENCE_TIME_OUTPUT
+#if INFERENCE_TIME_OUTPUT & !(PRETTY_OUTPUT)
 	unsigned long inference_end = micros();
 	unsigned long inference_time = inference_end - inference_start;
 	Serial.print("Inference time: ");
@@ -336,7 +336,7 @@ void loop()
 		float score = output_tensor->data.f[i];
 #endif
 
-#if PERCENTAGE_OUTPUT
+#if PERCENTAGE_OUTPUT | PRETTY_OUTPUT
 		Serial.print(LABELS_PADDED[i]);
 	#if OPTIMIZED
 		Serial.print((score - output_zero_point) * output_scale * 100.0f, 2);
@@ -353,11 +353,14 @@ void loop()
 		}
 	}
 
+#if PERCENTAGE_OUTPUT & !(PRETTY_OUTPUT)
+	Serial.println();
+#endif
 #if REGULAR_OUTPUT | PRETTY_OUTPUT | FUNNY_OUTPUT
 	Serial.println(LABELS[best_label]);
 #endif
 
-#if REGULAR_OUTPUT | FUNNY_OUTPUT
+#if (REGULAR_OUTPUT | FUNNY_OUTPUT) & !(PRETTY_OUTPUT)
 	delay(PREPARATION_DELAY_MS);
 	Serial.println();
 #endif

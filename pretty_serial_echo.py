@@ -5,22 +5,22 @@ import matplotlib.pyplot as plt
 PORT = "/dev/ttyACM0"
 BAUD_RATE = 9600
 SAMPLES_PER_MEASUREMENT = 119
+IMAGE_WIDTH_HEIGHT = 30
+IMAGE_WIDTH_HEIGHT_IDX = IMAGE_WIDTH_HEIGHT - 1
 
 arduino = serial.Serial(PORT, BAUD_RATE)
-print('\n' * 9)
 
 colors = np.linspace(255 - 2 * SAMPLES_PER_MEASUREMENT + 2, 255, SAMPLES_PER_MEASUREMENT) / 255
 while True:
-    image = np.zeros((30, 30))
+    image = np.zeros((IMAGE_WIDTH_HEIGHT, IMAGE_WIDTH_HEIGHT))
     for i in range(SAMPLES_PER_MEASUREMENT):
         x, y = arduino.readline().decode("utf-8").split()
-        x, y = int(float(x) * 29), int(float(y) * 29)
+        x, y = int(float(x) * IMAGE_WIDTH_HEIGHT_IDX), int(float(y) * IMAGE_WIDTH_HEIGHT_IDX)
         image[y, x] = colors[i]
     
     for _ in range(5):
         print(arduino.readline().decode("utf-8"), end='')
 
-    print('\n' * 2)
     label = arduino.readline().decode("utf-8").strip()
     
     figure, axis = plt.subplots(1, 1)
@@ -36,6 +36,7 @@ while True:
     plt.pause(3)
     plt.close()
 
-    print('\n' * 4)
+    print("")
     
     arduino.write([1])
+    

@@ -237,5 +237,3 @@ def laod_as_arrays_and_images_cropped(directory, one_hot=True, seed=42):
         both_variants[i] = (X_train, X_test, y_train, y_test)
        
     return both_variants
-
-load_as_array("data")

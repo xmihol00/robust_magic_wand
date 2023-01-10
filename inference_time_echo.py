@@ -1,5 +1,16 @@
 import serial
 import re
+import json
+import sys
+
+with open("inference_times.json", "r") as json_file:
+    inference_times = json.load(json_file)
+
+try:
+    model_name = sys.argv[1]
+except:
+    print("Specify model name in the first argument", file=sys.stderr)
+    exit(1)
 
 PORT = "/dev/ttyACM0"
 BAUD_RATE = 9600
@@ -21,4 +32,9 @@ while True:
             break
     print(line, end='')
 
-print(f"Inference time average over {number_of_samples} runs is: {inference_time_sum / number_of_samples} ms.")
+inference_times[model_name] = inference_time_sum / number_of_samples
+
+with open("inference_times.json", "w") as json_file:
+    json.dump(inference_times, json_file, indent=4)
+
+print(f"Inference time average over {number_of_samples} runs is: {inference_times[model_name]} ms.")

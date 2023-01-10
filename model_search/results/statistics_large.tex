@@ -1,0 +1,26 @@
+\begin{table}[ht]
+\begin{adjustwidth}{-0.85cm}{}\tiny
+\center
+\begin{tabular}{ |c|c|c|c|c|c|c|c|c|c|c|c|c| }
+\hline
+& \thead{Total\\parameters} & \thead{Trainable\\parameters} & \thead{Non\\trainable\\parameters} & \thead{Size} & \thead{Optimized\\size} & \thead{Training\\time\\GPU} & \thead{Epochs} & \thead{FLOPS} & \thead{Full\\model\\accuracy} & \thead{Optimized\\model\\accuracy} & \thead{Full\\model\\inference\\time} & \thead{Optimized\\model\\inference\\time} \\
+\hline
+\thead{baseline\_linear} & 1195 & 1195 & 0 & 6100 & 2736 & 0.82 s & 11 & 2410 & 88.50 \% & 89.50 \% & ----- & ----- \\
+\thead{Only\_DENS\_S} & 13355 & 13355 & 0 & 55884 & 16552 & 0.94 s & 14 & 26655 & 95.50 \% & 94.50 \% & ----- & ----- \\
+\thead{Only\_DENS\_M} & 24405 & 24405 & 0 & 99520 & 26968 & 0.91 s & 10 & 48730 & 91.00 \% & 91.00 \% & ----- & ----- \\
+\thead{Only\_DENS\_L} & 29205 & 29205 & 0 & 119284 & 32624 & 0.72 s & 12 & 58280 & 96.00 \% & 96.50 \% & ----- & ----- \\
+\thead{CONV\_DENS\_S} & 10181 & 10181 & 0 & 45564 & 17472 & 2.57 s & 7 & 537886 & 94.50 \% & 95.50 \% & ----- & ----- \\
+\thead{CONV\_DENS\_L} & 40069 & 40069 & 0 & 165116 & 48968 & 2.28 s & 7 & 2013726 & 95.50 \% & 95.00 \% & ----- & ----- \\
+\thead{Only\_CONV\_S} & 23877 & 23877 & 0 & 100432 & 32584 & 1.08 s & 6 & 584670 & 93.00 \% & 95.00 \% & ----- & ----- \\
+\thead{Only\_CONV\_L} & 93829 & 93829 & 0 & 380240 & 105560 & 1.32 s & 6 & 1906590 & 95.00 \% & 96.50 \% & ----- & ----- \\
+\thead{Only\_DENS\_DO\_S} & 13355 & 13355 & 0 & 55884 & 16552 & 1.07 s & 7 & 26655 & 90.00 \% & 89.50 \% & ----- & ----- \\
+\thead{Only\_DENS\_DO\_M} & 24405 & 24405 & 0 & 99520 & 26968 & 0.42 s & 5 & 48730 & 90.50 \% & 89.50 \% & ----- & ----- \\
+\thead{Only\_DENS\_DO\_L} & 29205 & 29205 & 0 & 119284 & 32624 & 0.58 s & 10 & 58280 & 94.50 \% & 93.50 \% & ----- & ----- \\
+\thead{CONV\_DENS\_DO\_S} & 10181 & 10181 & 0 & 45564 & 17472 & 2.43 s & 8 & 537886 & 95.00 \% & 95.50 \% & ----- & ----- \\
+\thead{CONV\_DENS\_DO\_L} & 40069 & 40069 & 0 & 165116 & 48968 & 2.16 s & 9 & 2013726 & 96.50 \% & 96.50 \% & ----- & ----- \\
+\hline
+\end{tabular}
+\caption{Summary of analyzed models during model selection and hyperparametr tuning.}
+\label{table1}
+\end{adjustwidth}
+\end{table}

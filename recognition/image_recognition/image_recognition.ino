@@ -14,21 +14,21 @@
 
 #define CROPPED_INPUT 0				// set to 1, when model in model.h expects input of copped lenght (110 samples instead of 119)
 
-#define REGULAR_OUTPUT 0			// set to 1 for basic output of the program
+#define REGULAR_OUTPUT 1			// set to 1 for basic output of the program
 
 #define PERCENTAGE_OUTPUT 1			// set to 1 to enhance output with percentages of each class
 
 #define INFERENCE_TIME_OUTPUT 1		// set to 1 to see the time it takes from having samples measured until prediction
 
-#define FUNNY_OUTPUT 1				// set to 1 for funny output of the program
+#define FUNNY_OUTPUT 0				// set to 1 for funny output of the program
 
-#define PRETTY_OUTPUT 0				// set to 1 to print info necessary to create output of the program as in the video, use the pretty_serial_echo.py to display it
+#define PRETTY_OUTPUT 1				// set to 1 to print info necessary to create output of the program as in the video, use the pretty_serial_echo.py to display it
 
 using namespace std;
 using namespace tflite;
 
 const float ACCELERATION_TRESHOLD = 1.5;
-const unsigned PREPARATION_DELAY_MS = 2500;
+const unsigned PREPARATION_DELAY_MS = 0;
 
 const unsigned IMAGE_HEIGHT = 20;
 const unsigned IMAGE_WIDTH = 20;
@@ -45,11 +45,11 @@ const float DELTA_T = 1.0f / SAMPLES_PER_SPELL;
 
 const unsigned NUMBER_OF_LABELS = 5;
 
-#if REGULAR_OUTPUT & !(FUNNY_OUTPUT)
+#if (REGULAR_OUTPUT & !(FUNNY_OUTPUT)) | PRETTY_OUTPUT 
 const char* LABELS[NUMBER_OF_LABELS] = { "Alohomora", "Arresto Momentum", "Avada Kedavra", "Locomotor", "Revelio" };
 #endif
 
-#if FUNNY_OUTPUT
+#if FUNNY_OUTPUT & !(PRETTY_OUTPUT)
 const char* LABELS[NUMBER_OF_LABELS] = { "'Alohomora' is not meant for stealing, get out!", "Red light! 'Arresto Momentum' stop moving.", 
 										 "Oh no! 'Avada Kedavra' RIP :(.", "Every small kid here can move things with 'Locomotor' :).", 
 										 "You can't see it, 'Revelio', you can see it.",  };
@@ -80,7 +80,7 @@ TfLiteTensor *output_tensor = nullptr;
 float inverse_input_scale = 0.0f;
 float input_zero_point = 0.0f;
 
-	#if PERCENTAGE_OUTPUT
+	#if PERCENTAGE_OUTPUT | PRETTY_OUTPUT
 	float output_scale = 0.0f;
 	float output_zero_point = 0.0f;
 	#endif
@@ -179,7 +179,7 @@ void load_stroke()
 
 #if OPTIMIZED
 	#if CROPPED_INPUT
-		float color = (255.0f - 2 * CROPPED_SAMPLES_DOUBLED + 2.0f) / 255.0f * inverse_input_scale + input_zero_point;
+		float color = (255.0f - CROPPED_SAMPLES_DOUBLED + 2.0f) / 255.0f * inverse_input_scale + input_zero_point;
 		float color_increase = 2.0f / 255.0f * inverse_input_scale;
 
 		for (unsigned i = FRONT_CROP_SAMPLES; i < CROPPED_SAMPLES_DOUBLED; i += 2)
@@ -191,7 +191,7 @@ void load_stroke()
 			color += color_increase;
 		}
 	#else
-		float color = (255.0f - 2 * SAMPLES_DOUBLED + 2.0f) / 255.0f * inverse_input_scale + input_zero_point;
+		float color = (255.0f - SAMPLES_DOUBLED + 2.0f) / 255.0f * inverse_input_scale + input_zero_point;
 		float color_increase = 2.0f / 255.0f * inverse_input_scale;
 
 		for (unsigned i = 0; i < SAMPLES_DOUBLED; i += 2)
@@ -232,6 +232,9 @@ void load_stroke()
 #endif
 
 #if PRETTY_OUTPUT
+	shift_x = 1.0f / (max_x - min_x);
+	shift_y = 1.0f / (max_y - min_y);
+	
 	for (unsigned i = 0; i < SAMPLES_DOUBLED; i += 2)
 	{
 		Serial.print((stroke_points[i] - min_x) * shift_x, 4);
@@ -281,7 +284,11 @@ void setup()
 
 void loop()
 {
+#if OPTIMIZED
+	memset(input_tensor->data.int8, input_zero_point, NUMNBER_OF_IMAGE_PIXELS * sizeof(int8_t));
+#else
 	memset(input_tensor->data.f, 0, NUMNBER_OF_IMAGE_PIXELS * sizeof(float));
+#endif
 
 #if REGULAR_OUTPUT & !(PRETTY_OUTPUT) & !(FUNNY_OUTPUT)
 	Serial.println("Cast a spell.");
@@ -326,7 +333,7 @@ void loop()
 	Serial.println("Let's see how good of a magician are you...");
 #endif
 
-#if INFERENCE_TIME_OUTPUT
+#if INFERENCE_TIME_OUTPUT & !(PRETTY_OUTPUT)
 	unsigned long inference_start = micros();
 #endif
 
@@ -343,7 +350,7 @@ void loop()
 			;
 	}
 
-#if INFERENCE_TIME_OUTPUT
+#if INFERENCE_TIME_OUTPUT & !(PRETTY_OUTPUT)
 	unsigned long inference_end = micros();
 	unsigned long inference_time = inference_end - inference_start;
 	Serial.print("Inference time: ");
@@ -383,11 +390,14 @@ void loop()
 		}
 	}
 
+#if PERCENTAGE_OUTPUT & !(PRETTY_OUTPUT)
+	Serial.println();
+#endif
 #if REGULAR_OUTPUT | PRETTY_OUTPUT | FUNNY_OUTPUT
 	Serial.println(LABELS[best_label]);
 #endif
 
-#if REGULAR_OUTPUT | FUNNY_OUTPUT
+#if (REGULAR_OUTPUT | FUNNY_OUTPUT) & !(PRETTY_OUTPUT)
 	delay(PREPARATION_DELAY_MS);
 	Serial.println();
 #endif
