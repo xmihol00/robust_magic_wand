@@ -1,4 +1,6 @@
 
+# launch as './launch_arduino.sh <{compile, upload}> <path to a directory with *.ino file>'
+
 if [ $1 = "compile" ]
 then
     echo "compiling..."

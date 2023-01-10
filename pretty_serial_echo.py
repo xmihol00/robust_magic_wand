@@ -38,5 +38,5 @@ while True:
 
     print("")
     
-    arduino.write([1])
+    arduino.write([1]) # deadlock may appear, in such a case restart the arduino
     

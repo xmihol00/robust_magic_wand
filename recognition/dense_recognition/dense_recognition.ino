@@ -17,18 +17,18 @@ using namespace tflite;
 
 #define CROPPED_INPUT 0				// set to 1, when model in model.h expects input of copped lenght (110 samples instead of 119)
 
-#define REGULAR_OUTPUT 1			// set to 1 for basic output of the program
+#define REGULAR_OUTPUT 0			// set to 1 for basic output of the program
 
-#define PERCENTAGE_OUTPUT 1			// set to 1 to enhance output with percentages of each class
+#define PERCENTAGE_OUTPUT 0			// set to 1 to enhance output with percentages of each class
 
-#define INFERENCE_TIME_OUTPUT 1		// set to 1 to see the time it takes from having samples measured until prediction
+#define INFERENCE_TIME_OUTPUT 0		// set to 1 to see the time it takes from having samples measured until prediction
 
 #define FUNNY_OUTPUT 0				// set to 1 for funny output of the program
 
 #define PRETTY_OUTPUT 1				// set to 1 to print info necessary to create output of the program as in the video, use the pretty_serial_echo.py to display it
 
-const float ACCELERATION_TRESHOLD = 2;
-const unsigned PREPARATION_DELAY_MS = 0;
+const float ACCELERATION_TRESHOLD = 2.0;
+const unsigned PREPARATION_DELAY_MS = 2500;
 
 const unsigned SAMPLES_PER_SPELL = 119;
 const unsigned SAMPLES_DOUBLED = SAMPLES_PER_SPELL << 1;
@@ -178,13 +178,13 @@ void load_stroke()
 		for (unsigned i = FRONT_CROP_SAMPLES; i < CROPPED_SAMPLES_DOUBLED; i += 2)
 		{
 			input_tensor->data.int8[i - FRONT_CROP_SAMPLES] = static_cast<int8_t>((stroke_points[i] - min_x) * shift_x * inverse_input_scale + input_zero_point);
-			input_tensor->data.int8[i - FRONT_CROP_SAMPLES + 1] = static_cast<unsigned>((stroke_points[i + 1] - min_y) * shift_y * inverse_input_scale + input_zero_point);
+			input_tensor->data.int8[i - FRONT_CROP_SAMPLES + 1] = static_cast<int8_t>((stroke_points[i + 1] - min_y) * shift_y * inverse_input_scale + input_zero_point);
 		}
 	#else
 		for (unsigned i = 0; i < SAMPLES_DOUBLED; i += 2)
 		{
 			input_tensor->data.int8[i] = static_cast<int8_t>((stroke_points[i] - min_x) * shift_x * inverse_input_scale + input_zero_point);
-			input_tensor->data.int8[i + 1] = static_cast<unsigned>((stroke_points[i + 1] - min_y) * shift_y * inverse_input_scale + input_zero_point);
+			input_tensor->data.int8[i + 1] = static_cast<int8_t>((stroke_points[i + 1] - min_y) * shift_y * inverse_input_scale + input_zero_point);
 		}
 	#endif
 #else
@@ -244,7 +244,7 @@ void setup()
 	inverse_input_scale = 1 / input_tensor->params.scale;
 	input_zero_point = input_tensor->params.zero_point;
 
-	#if PERCENTAGE_OUTPUT
+	#if PERCENTAGE_OUTPUT | PRETTY_OUTPUT
 	output_scale = output_tensor->params.scale;
 	output_zero_point = output_tensor->params.zero_point;
 	#endif

@@ -13,7 +13,7 @@
 using namespace std;
 using namespace tflite;
 
-const float ACCELERATION_TRESHOLD = 2;
+const float ACCELERATION_TRESHOLD = 2.0;
 const unsigned PREPARATION_DELAY_MS = 2500;
 
 const unsigned SAMPLES_PER_SPELL = 119;
@@ -52,7 +52,7 @@ float input_zero_point = 0.0f;
 float output_scale = 0.0f;
 float output_zero_point = 0.0f;
 
-const unsigned TENSOR_ARENA_SIZE = 32 * 1024;
+const unsigned TENSOR_ARENA_SIZE = 32 * 1024; // increase when loading larger models
 byte tensor_arena[TENSOR_ARENA_SIZE] __attribute__((aligned(16)));
 
 void average_acceleration()
@@ -62,10 +62,12 @@ void average_acceleration()
 
 	for (unsigned i = 0; i < SAMPLES_TRIPPELED; i += 3)
 	{
+        // loading the sum of all accelerations
 		acceleration_average_x += acceleration_data[i + 1];
 		acceleration_average_y += acceleration_data[i + 2];
 	}
 
+    // averaging by dividing with the number of samples (implemented as multiplying by the inverse)
 	acceleration_average_x *= DELTA_T;
 	acceleration_average_y *= DELTA_T;
 }
@@ -80,16 +82,19 @@ void calculate_angle()
 
 	for (unsigned i = 0, j = 0; j < SAMPLES_DOUBLED; i += 3, j += 2)
 	{
+        // integration of the angle for X and Y axis
 		angles[j] = previous_angle_x + gyroscope_data[i + 1] * DELTA_T;
 		angles[j + 1] = previous_angle_y + gyroscope_data[i + 2] * DELTA_T;
 
 		previous_angle_x = angles[j];
 		previous_angle_y = angles[j + 1];
 
+        // loading the sum of all angles
 		angle_average_x += previous_angle_x;
 		angle_average_y += previous_angle_y;
 	}
 
+    // averaging by dividing with the number of samples (implemented as multiplying by the inverse)
 	angle_average_x *= DELTA_T;
 	angle_average_y *= DELTA_T;
 }
@@ -100,7 +105,7 @@ void calculate_stroke()
 	max_x = max_y = numeric_limits<float>::min();
 
 	float acceleration_magnitude = sqrtf((acceleration_average_x * acceleration_average_x) + (acceleration_average_y * acceleration_average_y));
-	if (acceleration_magnitude < 0.0001f)
+	if (acceleration_magnitude < 0.0001f) // ensure division by 0 does not happen
 	{
 		acceleration_magnitude = 0.0001f;
 	}
@@ -112,6 +117,7 @@ void calculate_stroke()
 		float normalized_angle_x = (angles[i] - angle_average_x);
 		float normalized_angle_y = (angles[i + 1] - angle_average_y);
 
+        // rotation of the acceleration
 		float x = -normalized_acceleration_x * normalized_angle_x - normalized_acceleration_y * normalized_angle_y;
 		float y = normalized_acceleration_x * normalized_angle_y - normalized_acceleration_y * normalized_angle_x;
 
@@ -140,13 +146,15 @@ void calculate_stroke()
 
 void load_stroke()
 {
+    // avoid division in the loop by inverting here
 	float shift_x = 1.0f / (max_x - min_x);
 	float shift_y = 1.0f / (max_y - min_y);
 
     for (unsigned i = 0; i < SAMPLES_DOUBLED; i += 2)
     {
+        // normalize and shift the input values
         input_tensor->data.int8[i] = static_cast<int8_t>((stroke_points[i] - min_x) * shift_x * inverse_input_scale + input_zero_point);
-        input_tensor->data.int8[i + 1] = static_cast<unsigned>((stroke_points[i + 1] - min_y) * shift_y * inverse_input_scale + input_zero_point);
+        input_tensor->data.int8[i + 1] = static_cast<int8_t>((stroke_points[i + 1] - min_y) * shift_y * inverse_input_scale + input_zero_point);
     }
 }
 
@@ -177,7 +185,7 @@ void setup()
 	input_tensor = interpreter->input(0);
 	output_tensor = interpreter->output(0);
 
-	inverse_input_scale = 1 / input_tensor->params.scale;
+	inverse_input_scale = 1 / input_tensor->params.scale; // avoid division by inverting here
 	input_zero_point = input_tensor->params.zero_point;
 	output_scale = output_tensor->params.scale;
 	output_zero_point = output_tensor->params.zero_point;
@@ -201,6 +209,7 @@ void loop()
 	}
 
 	Serial.println("Capturing a spell...");
+    Serial.println();
 
 	for (unsigned i = 0; i < SAMPLES_TRIPPELED;)
 	{
@@ -214,6 +223,7 @@ void loop()
 		}
 	}
 
+    // the pre-processing pipeline
 	average_acceleration();
 	calculate_angle();
 	calculate_stroke();
@@ -232,21 +242,23 @@ void loop()
 
 	for (unsigned i = 0; i < NUMBER_OF_LABELS; i++)
 	{
-		int8_t score = output_tensor->data.int8[i];
+		int8_t score = output_tensor->data.int8[i]; // no need to rescale the result for argmax
 
 		Serial.print(LABELS_PADDED[i]);
 		Serial.print((score - output_zero_point) * output_scale * 100.0f, 2);
 		Serial.println(" %");
 
-		if (score > best_score)
+		if (score > best_score) // argmax
 		{
 			best_score = score;
 			best_label = i;
 		}
 	}
 
+    Serial.println();
+    Serial.print("Classified: ");
 	Serial.println(LABELS[best_label]);
 
-    delay(PREPARATION_DELAY_MS);
+    delay(PREPARATION_DELAY_MS); // wait specified time to prepare the magic wand
     Serial.println();
 }

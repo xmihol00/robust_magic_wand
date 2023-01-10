@@ -27,8 +27,8 @@
 using namespace std;
 using namespace tflite;
 
-const float ACCELERATION_TRESHOLD = 1.5;
-const unsigned PREPARATION_DELAY_MS = 0;
+const float ACCELERATION_TRESHOLD = 2.0;
+const unsigned PREPARATION_DELAY_MS = 2500;
 
 const unsigned IMAGE_HEIGHT = 20;
 const unsigned IMAGE_WIDTH = 20;
@@ -234,7 +234,7 @@ void load_stroke()
 #if PRETTY_OUTPUT
 	shift_x = 1.0f / (max_x - min_x);
 	shift_y = 1.0f / (max_y - min_y);
-	
+
 	for (unsigned i = 0; i < SAMPLES_DOUBLED; i += 2)
 	{
 		Serial.print((stroke_points[i] - min_x) * shift_x, 4);
@@ -275,7 +275,7 @@ void setup()
 	inverse_input_scale = 1 / input_tensor->params.scale;
 	input_zero_point = input_tensor->params.zero_point;
 
-	#if PERCENTAGE_OUTPUT
+	#if PERCENTAGE_OUTPUT | PRETTY_OUTPUT
 	output_scale = output_tensor->params.scale;
 	output_zero_point = output_tensor->params.zero_point;
 	#endif

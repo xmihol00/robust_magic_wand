@@ -1,0 +1,25 @@
+\begin{table}[ht!]
+\tiny
+\center
+\begin{tabular}{ |c|c|c|c|c| }
+\hline
+& \thead{Training\\time\\Colab\\CPU\\{[s]}} & \thead{Epochs} & \thead{Full\\model\\accuracy\\{[\%]}} & \thead{Optimized\\model\\accuracy\\{[\%]}} \\
+\hline
+\thead{baseline\_linear} & 1.13 & 10 & 81.00 & 80.00 \\
+\thead{Only\_DENS\_S} & 0.72 & 6 & 89.00 & 88.00 \\
+\thead{Only\_DENS\_M} & 0.74 & 7 & 91.00 & 88.00 \\
+\thead{Only\_DENS\_L} & 0.76 & 6 & 93.00 & 94.00 \\
+\thead{CONV\_DENS\_S} & 4.95 & 11 & 90.00 & 90.00 \\
+\thead{CONV\_DENS\_L} & 4.92 & 12 & 95.00 & 95.00 \\
+\thead{Only\_CONV\_S} & 2.49 & 9 & 93.00 & 95.00 \\
+\thead{Only\_CONV\_L} & 4.89 & 12 & 94.00 & 95.00 \\
+\thead{Only\_DENS\_DO\_S} & 1.38 & 6 & 91.00 & 91.00 \\
+\thead{Only\_DENS\_DO\_M} & 0.83 & 6 & 86.00 & 84.00 \\
+\thead{Only\_DENS\_DO\_L} & 1.25 & 10 & 94.00 & 94.00 \\
+\thead{CONV\_DENS\_DO\_S} & 2.97 & 13 & 94.00 & 93.00 \\
+\thead{CONV\_DENS\_DO\_L} & 4.93 & 13 & 96.00 & 96.00 \\
+\hline
+\end{tabular}
+\caption{Summary of relevant analyzed models trained on the smaller data set with full input size}
+\label{table2}
+\end{table}
