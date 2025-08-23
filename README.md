@@ -9,6 +9,8 @@ pip install -r requirements.txt
 
 2. Download the **arduino-cli** from https://arduino.github.io/arduino-cli/0.21/installation/#download and extract the downloaded file to a directory already in the system ``PATH``.
 
+3. Install the TensorFlow Lite library from https://github.com/tensorflow/tflite-micro-arduino-examples#github
+
 ## Repository structure
 ```
 --|

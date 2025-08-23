@@ -30,13 +30,13 @@ while True:
     axis.set_yticks([], [])
     axis.set_frame_on(False)
 
+    print("\nPrepare for next stroke ...")
     plt.subplots_adjust(left=0.05, bottom=0.05, right=0.95, top=0.84, wspace=0.25, hspace=0.5)
     plt.get_current_fig_manager().full_screen_toggle()
     plt.show(block=False)
     plt.pause(3)
     plt.close()
 
-    print("")
-    
     arduino.write([1]) # deadlock may appear, in such a case restart the arduino
+    print("Stroke now\n")
     

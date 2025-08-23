@@ -1,5 +1,8 @@
-
-#include <Arduino_LSM9DS1.h>
+#ifdef BOARD1
+	#include <Arduino_LSM9DS1.h>
+#else
+	#include "Arduino_BMI270_BMM150.h"
+#endif
 #include <limits>
 #include <cstring>
 
@@ -67,7 +70,6 @@ float min_x, min_y, max_x, max_y;
 
 float acceleration_data[SAMPLES_TRIPPELED] = {};
 float gyroscope_data[SAMPLES_TRIPPELED] = {};
-float magnetometr_data[SAMPLES_TRIPPELED] = {};
 float angles[SAMPLES_DOUBLED] = {};
 float stroke_points[SAMPLES_DOUBLED] = {};
 
@@ -323,7 +325,6 @@ void loop()
 		{
 			IMU.readAcceleration(acceleration_data[i], acceleration_data[i + 1], acceleration_data[i + 2]);
 			IMU.readGyroscope(gyroscope_data[i], gyroscope_data[i + 1], gyroscope_data[i + 2]);
-			IMU.readMagneticField(magnetometr_data[i], magnetometr_data[i + 1], magnetometr_data[i + 2]);
 
 			i += 3;
 		}
