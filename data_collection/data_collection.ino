@@ -1,4 +1,8 @@
-#include <Arduino_LSM9DS1.h>
+#ifdef BOARD1
+	#include <Arduino_LSM9DS1.h>
+#else
+	#include "Arduino_BMI270_BMM150.h"
+#endif
 
 const float ACCELERATION_THRESHOLD = 3.0;
 const unsigned SAMPLES_PER_SPELL = 119;

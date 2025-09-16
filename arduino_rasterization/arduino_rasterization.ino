@@ -1,5 +1,9 @@
 
-#include <Arduino_LSM9DS1.h>
+#ifdef BOARD1
+	#include <Arduino_LSM9DS1.h>
+#else
+	#include "Arduino_BMI270_BMM150.h"
+#endif
 #include <limits>
 
 const float ACCELERATION_TRESHOLD = 1.5;

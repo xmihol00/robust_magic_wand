@@ -1,3 +1,5 @@
+# run as: sudo chmod 666 /dev/ttyACM0; python pretty_serial_echo.py
+
 import serial
 import numpy as np
 import matplotlib.pyplot as plt
@@ -9,6 +11,7 @@ IMAGE_WIDTH_HEIGHT = 30
 IMAGE_WIDTH_HEIGHT_IDX = IMAGE_WIDTH_HEIGHT - 1
 
 arduino = serial.Serial(PORT, BAUD_RATE)
+arduino.write([1])
 
 colors = np.linspace(255 - 2 * SAMPLES_PER_MEASUREMENT + 2, 255, SAMPLES_PER_MEASUREMENT) / 255
 while True:
